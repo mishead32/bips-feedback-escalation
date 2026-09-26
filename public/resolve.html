@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Submit Resolution – BIPS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#EEF2F8;font-family:Arial,Helvetica,sans-serif;color:#1d2433}
+  .wrap{max-width:720px;margin:0 auto;padding:18px}
+  .card{background:#fff;border:1px solid #D9E1EC;border-radius:10px;overflow:hidden}
+  .hd{background:#1F3864;color:#fff;padding:16px 20px}
+  .hd small{display:block;opacity:.8;font-size:12px;letter-spacing:.06em}
+  .hd h1{margin:4px 0 0;font-size:20px}
+  .bd{padding:18px 20px}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px}
+  td{border:1px solid #E1E7F0;padding:8px 10px;vertical-align:top;white-space:pre-wrap}
+  td:first-child{width:36%;font-weight:bold;color:#44546A;background:#F6F8FC;white-space:normal}
+  .pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:bold}
+  .red{background:#FDE4E1;color:#9B2C1F}.amber{background:#FFF1D6;color:#8A5A00}
+  label{display:block;font-weight:bold;margin:12px 0 6px;font-size:14px}
+  select,textarea{width:100%;font:inherit;font-size:15px;padding:10px;border:1px solid #C5D0E0;border-radius:6px}
+  textarea{min-height:140px;resize:vertical}
+  button{margin-top:16px;width:100%;padding:13px;font-size:16px;font-weight:bold;border:0;border-radius:6px;background:#1F3864;color:#fff;cursor:pointer}
+  button:disabled{opacity:.6}
+  .msg{padding:14px;border-radius:6px;margin-top:14px;font-size:15px}
+  .ok{background:#E3F4E8;color:#1B4D30}.err{background:#FDE4E1;color:#7A1F14}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <div class="hd"><small id="school">BHUPINDRA INTERNATIONAL PUBLIC SCHOOL</small><h1 id="title">Submit Resolution</h1></div>
+  <div class="bd" id="bd">Loading…</div>
+</div></div>
+<script>
+var P=new URLSearchParams(location.search),T=P.get('t'),K=P.get('k');
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function row(k,v){return '<tr><td>'+esc(k)+'</td><td>'+v+'</td></tr>'}
+var bd=document.getElementById('bd');
+document.getElementById('title').textContent='Submit Resolution – '+(T||'');
+fetch('/api/resolve?t='+encodeURIComponent(T||'')+'&k='+encodeURIComponent(K||'')).then(function(r){return r.json()}).then(function(j){
+  if(j.error){bd.innerHTML='<div class="msg err">'+esc(j.error)+'</div>';return}
+  var t=j.ticket,h='';
+  if(t.Status==='Re-escalated')h+='<p><span class="pill red">RE-ESCALATION · Level '+esc(t.Level)+'</span> The parent was <b>not satisfied</b> with the previous resolution.</p>';
+  h+='<table>'+row('Parent Name',esc(t['Parent Name']))+row('Mobile Number',esc(t.Mobile))+row('Student / Class',esc(t['Student Name'])+' — '+esc(t['Class & Section']))+
+    row('Ratings','Overall <b>'+esc(t.Overall)+'/5</b> · Teaching &amp; Learning '+esc(t['Teaching & Learning'])+'/5 · Environment &amp; Safety '+esc(t['Environment & Safety'])+'/5')+
+    row("Parent's feedback",esc(t['Improvement Feedback']||'—'))+row('Suggestions',esc(t.Suggestions||'—'))+
+    (t['Response Remarks']?row('Why not satisfied',esc(t['Response Remarks'])):'')+row('Current status','<span class="pill amber">'+esc(t.Status)+'</span>')+'</table>';
+  if(t.Status==='Escalated'||t.Status==='Re-escalated'){
+    h+='<form id="f"><label for="by">Resolved by</label><select id="by">'+j.resolvers.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select>'+
+      '<label for="txt">Resolution / action taken (this will be shared with the parent)</label><textarea id="txt" placeholder="e.g. Spoke with the class teacher; a separate doubt-clearing period will be held every Friday from next week…"></textarea>'+
+      '<button id="b" type="submit">Submit Resolution</button></form><div id="m"></div>';
+  } else h+='<div class="msg ok">A resolution has already been recorded for this ticket. Thank you.</div>';
+  bd.innerHTML=h;
+  var f=document.getElementById('f');
+  if(f)f.onsubmit=function(e){
+    e.preventDefault();
+    var txt=document.getElementById('txt').value.trim(),b=document.getElementById('b'),m=document.getElementById('m');
+    if(txt.length<5){m.className='msg err';m.textContent='Please write the resolution.';return}
+    b.disabled=true;b.textContent='Saving…';
+    fetch('/api/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t:T,k:K,text:txt,by:document.getElementById('by').value})})
+      .then(function(r){return r.json()}).then(function(j){
+        if(j.error)throw new Error(j.error);
+        f.style.display='none';m.className='msg ok';m.textContent='Thank you. The resolution has been saved and the MIS team will share it with the parent.';
+      }).catch(function(err){b.disabled=false;b.textContent='Submit Resolution';m.className='msg err';m.textContent=err.message});
+  };
+}).catch(function(){bd.innerHTML='<div class="msg err">Could not load. Please check your internet and refresh.</div>'});
+</script>
+</body>
+</html>

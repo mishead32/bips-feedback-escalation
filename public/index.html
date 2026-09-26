@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BIPS Feedback Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<style>
+:root{--brand:#1F3864;--ink:#1d2433;--mute:#5b6477;--line:#DDE4EE;--bg:#EEF2F8;--card:#fff;
+ --red:#C0392B;--redbg:#FDE8E5;--amber:#B26A00;--amberbg:#FFF3DC;--green:#2E7D4F;--greenbg:#E3F4E8;--blue:#2457A6;--bluebg:#E6EEFA;--grey:#6B7280;--greybg:#F0F2F5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--ink);font-size:14px}
+button{font:inherit;cursor:pointer}
+.top{background:var(--brand);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.top .t small{display:block;font-size:11px;letter-spacing:.12em;opacity:.8}
+.top .t b{font-size:19px}
+.top .sp{flex:1}
+.top select,.top input{font:inherit;padding:6px 8px;border-radius:6px;border:0}
+.top .btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);padding:6px 12px;border-radius:6px}
+.upd{font-size:12px;opacity:.9}.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4ADE80;margin-right:6px;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
+.wrap{padding:18px 22px;max-width:1440px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 14px;border-top:4px solid var(--brand);cursor:pointer}
+.kpi:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.kpi .l{font-size:11.5px;color:var(--mute);font-weight:bold;text-transform:uppercase;letter-spacing:.04em;min-height:28px}
+.kpi .v{font-size:30px;font-weight:bold;margin-top:4px}
+.kpi .s{font-size:12px;color:var(--mute);margin-top:2px;min-height:16px}
+.kpi.red{border-top-color:var(--red)}.kpi.red .v{color:var(--red)}
+.kpi.amber{border-top-color:#E09B1E}.kpi.green{border-top-color:var(--green)}.kpi.green .v{color:var(--green)}
+.kpi.blue{border-top-color:var(--blue)}
+.row{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:12px;margin-top:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.panel h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.funnel .f{display:grid;grid-template-columns:150px 1fr 48px;align-items:center;gap:8px;margin:7px 0;font-size:13px}
+.bar{height:18px;background:var(--greybg);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:4px}
+.dist .f{display:grid;grid-template-columns:44px 1fr 40px;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.avg{display:flex;gap:10px;margin-bottom:10px}
+.avg div{flex:1;background:var(--greybg);border-radius:8px;padding:8px 10px}
+.avg b{font-size:20px;display:block}.avg span{font-size:11.5px;color:var(--mute)}
+.days{display:flex;align-items:flex-end;gap:3px;height:110px;padding-top:6px}
+.days .d{flex:1;background:var(--brand);border-radius:3px 3px 0 0;min-height:2px;position:relative}
+.days .d.low{background:linear-gradient(to top,var(--red) var(--p),var(--brand) var(--p))}
+.dlab{display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:4px}
+.tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:2px solid var(--line)}
+.tab{padding:10px 16px;border:0;background:none;font-weight:bold;color:var(--mute);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.tab .c{background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:5px}
+.pane{display:none;padding-top:14px}.pane.on{display:block}
+.grp{margin-bottom:18px}
+.grp h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.grp h4 .n{background:var(--greybg);border-radius:10px;padding:1px 8px;font-size:12px}
+.grp .hint{font-size:12px;color:var(--mute);font-weight:normal}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
+.tc{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:8px;padding:10px 12px;cursor:pointer}
+.tc:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tc .a{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mute)}
+.tc .b{font-weight:bold;margin:4px 0 2px}
+.tc .c2{font-size:12.5px;color:#374151;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tc.red{border-left-color:var(--red)}.tc.amber{border-left-color:#E09B1E}.tc.green{border-left-color:var(--green)}.tc.grey{border-left-color:#9CA3AF}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:bold;white-space:nowrap}
+.p-esc{background:var(--amberbg);color:var(--amber)}.p-reesc{background:var(--redbg);color:var(--red)}
+.p-res{background:var(--bluebg);color:var(--blue)}.p-sat{background:var(--greenbg);color:var(--green)}.p-nr{background:var(--greybg);color:var(--grey)}
+.p-over{background:var(--red);color:#fff}.p-old{background:var(--greybg);color:var(--grey)}
+.r{display:inline-block;min-width:22px;text-align:center;border-radius:4px;padding:1px 4px;font-weight:bold;font-size:12px}
+.r1,.r2{background:var(--redbg);color:var(--red)}.r3{background:var(--amberbg);color:var(--amber)}.r4{background:#FFF8E6;color:#8A6D00}.r5{background:var(--greenbg);color:var(--green)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.filters input,.filters select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.filters input{min-width:260px}
+table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dt th{background:#F4F6FA;text-align:left;font-size:12px;color:var(--mute);padding:9px 10px;border-bottom:1px solid var(--line);position:sticky;top:0}
+.dt td{padding:8px 10px;border-bottom:1px solid #EEF1F5;vertical-align:top;font-size:13px}
+.dt tr:hover td{background:#FAFBFD}
+.dt .cm{max-width:420px;color:#374151}
+.dt tr.clk{cursor:pointer}
+.sbtn{padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:bold}
+.sbtn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.empty{color:var(--mute);padding:14px;background:#fff;border:1px dashed var(--line);border-radius:8px}
+/* drawer */
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;z-index:10}
+.dr{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:#fff;z-index:11;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column}
+.dr.on{transform:none}.ov.on{display:block}
+.dr .hd{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px}
+.dr .hd b{font-size:17px;flex:1}.dr .hd button{background:none;border:0;color:#fff;font-size:22px}
+.dr .bd{padding:16px 18px;overflow:auto;flex:1}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;font-size:13px;margin-bottom:12px}
+.kv dt{color:var(--mute);font-weight:bold}.kv dd{margin:0;white-space:pre-wrap}
+.box{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;background:#FAFBFD}
+.box h5{margin:0 0 8px;font-size:13px;color:var(--brand);text-transform:uppercase;letter-spacing:.04em}
+.box textarea,.box select,.box input{width:100%;font:inherit;padding:8px;border:1px solid #C9D3E1;border-radius:6px;margin-bottom:8px}
+.box textarea{min-height:80px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn2{padding:9px 14px;border-radius:6px;border:1px solid var(--line);background:#fff;font-weight:bold}
+.btn2.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn2.wa{background:#1E9E57;color:#fff;border-color:#1E9E57}
+.btn2.ok{background:var(--green);color:#fff;border-color:var(--green)}
+.btn2.no{background:var(--red);color:#fff;border-color:var(--red)}
+.hist{font-size:12px;color:#374151;white-space:pre-wrap;background:var(--greybg);border-radius:6px;padding:10px;line-height:1.5}
+.msgprev{white-space:pre-wrap;font-size:12.5px;background:#E9F6EE;border-radius:6px;padding:10px;margin-bottom:8px;max-height:180px;overflow:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;z-index:20;display:none}
+#login{max-width:360px;margin:12vh auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px;text-align:center}
+#login input{width:100%;padding:10px;font:inherit;border:1px solid #C9D3E1;border-radius:6px;margin:12px 0}
+#load{padding:60px;text-align:center;color:var(--mute)}
+@media(max-width:1200px){.kpis{grid-template-columns:repeat(4,1fr)}.row{grid-template-columns:1fr}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.wrap{padding:12px}.filters input{min-width:0;flex:1}}
+</style>
+</head>
+<body>
+<div id="login" style="display:none">
+  <div style="font-size:12px;letter-spacing:.12em;color:var(--brand);font-weight:bold">BHUPINDRA INTERNATIONAL PUBLIC SCHOOL</div>
+  <h2 style="margin:6px 0 4px">Feedback Dashboard</h2>
+  <div style="color:var(--mute);font-size:13px">Enter the dashboard password</div>
+  <input id="pw" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn2 pri" style="width:100%" onclick="login()">Open Dashboard</button>
+  <div id="lerr" style="color:var(--red);margin-top:10px;font-size:13px"></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="t"><small>BHUPINDRA INTERNATIONAL PUBLIC SCHOOL</small><b>Parent Feedback &amp; Escalation Dashboard</b></div>
+    <div class="sp"></div>
+    <select id="range" onchange="rangeChanged()">
+      <option value="all">All time</option><option value="today">Today</option><option value="7">Last 7 days</option>
+      <option value="30">Last 30 days</option><option value="month">This month</option><option value="custom">Custom…</option>
+    </select>
+    <span id="custom" style="display:none"><input type="date" id="dfrom" onchange="render()"> – <input type="date" id="dto" onchange="render()"></span>
+    <button class="btn" onclick="load()">↻ Refresh</button>
+    <button class="btn" onclick="store('bipsKey','');location.reload()">Log out</button>
+    <span class="upd" id="upd"></span>
+  </div>
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+    <div class="row">
+      <div class="panel"><h3>Escalation progress</h3><div class="funnel" id="funnel"></div></div>
+      <div class="panel"><h3>Ratings</h3><div class="avg" id="avg"></div><div class="dist" id="dist"></div></div>
+      <div class="panel"><h3>Feedback received per day <span style="font-weight:normal;text-transform:none">(red = Overall ≤ 4)</span></h3><div class="days" id="days"></div><div class="dlab" id="dlab"></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-p="act" onclick="tab(this)">Action needed<span class="c" id="actc">0</span></button>
+      <button class="tab" data-p="tk" onclick="tab(this)">All tickets</button>
+      <button class="tab" data-p="fb" onclick="tab(this)">All feedback</button>
+    </div>
+    <div class="pane on" id="p-act"></div>
+    <div class="pane" id="p-tk">
+      <div class="filters">
+        <input id="q1" placeholder="Search parent, student, class, ticket…" oninput="renderTickets()">
+        <select id="fs" onchange="renderTickets()"><option value="">All statuses</option></select>
+      </div>
+      <div id="tkt"></div>
+    </div>
+    <div class="pane" id="p-fb">
+      <div class="filters">
+        <input id="q2" placeholder="Search parent, student, class, comment…" oninput="renderFeedback()">
+        <select id="fo" onchange="renderFeedback()"><option value="">All ratings</option><option value="low">Overall ≤ 4</option><option value="5">Overall 5</option><option value="cm5">Overall 5 with comment</option></select>
+      </div>
+      <div id="fbt"></div>
+    </div>
+  </div>
+</div>
+<div id="load">Loading…</div>
+
+<div class="ov" id="ov" onclick="closeDr()"></div>
+<div class="dr" id="dr"><div class="hd"><b id="drt"></b><button onclick="closeDr()">×</button></div><div class="bd" id="drb"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var KEY='', D=null, TS={ESC:'Escalated',REESC:'Re-escalated',RES:'Resolved – Awaiting Parent',SAT:'Closed – Satisfied',NR:'Closed – No Response'};
+var SCHOOL='Bhupindra International Public School';
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function toast(t){var el=$('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none'},2600)}
+function run(fn){
+  var args=[].slice.call(arguments,1),opt;
+  if(fn==='apiGetData')opt=fetch('/api/data',{headers:{'x-key':KEY},cache:'no-store'});
+  else opt=fetch('/api/action',{method:'POST',headers:{'x-key':KEY,'Content-Type':'application/json'},body:JSON.stringify({fn:fn,args:args.slice(1)})});
+  return opt.then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('Error '+r.status));return fn==='apiGetData'?JSON.stringify(j):j.result})});
+}
+
+/* ---------- login / load ---------- */
+function start(){
+  var saved=store('bipsKey');
+  if(saved){KEY=saved;load()}else{$('load').style.display='none';$('login').style.display='block'}
+}
+function login(){KEY=$('pw').value.trim();$('lerr').textContent='';load(true)}
+function load(fromLogin){
+  $('upd').textContent='Updating…';
+  run('apiGetData',KEY).then(function(j){
+    D=JSON.parse(j);store('bipsKey',KEY);
+    $('login').style.display='none';$('load').style.display='none';$('app').style.display='block';
+    $('upd').innerHTML='<span class="live"></span>Live · updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    if(D.sync&&D.sync.error)toast('Sync warning: '+D.sync.error);
+    if(D.sync&&D.sync.created)toast(D.sync.created+' new ticket(s) created');
+    render();
+  }).catch(function(e){
+    $('load').style.display='none';
+    if(/password/i.test(e.message)){store('bipsKey','');$('app').style.display='none';$('login').style.display='block';if(fromLogin)$('lerr').textContent='Wrong password';}
+    else{$('upd').textContent='';toast('Error: '+e.message)}
+  });
+}
+
+/* ---------- date filter ---------- */
+function rangeChanged(){$('custom').style.display=$('range').value==='custom'?'inline':'none';render()}
+function inRange(ms){
+  if(!ms)return $('range').value==='all';
+  var v=$('range').value,now=new Date(),d=new Date(ms);
+  if(v==='all')return true;
+  var sod=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  if(v==='today')return ms>=sod;
+  if(v==='7')return ms>=sod-6*864e5;
+  if(v==='30')return ms>=sod-29*864e5;
+  if(v==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  var f=$('dfrom').value,t=$('dto').value;
+  if(f&&ms<new Date(f+'T00:00:00').getTime())return false;
+  if(t&&ms>new Date(t+'T23:59:59').getTime())return false;
+  return true;
+}
+
+/* ---------- ticket helpers ---------- */
+function hrsSince(ms){return ms?(Date.now()-ms)/36e5:0}
+function isOld(t){return t['Escalation Email']!=='Sent'}
+function isOverdue(t){return (t.Status===TS.ESC||t.Status===TS.REESC)&&!isOld(t)&&hrsSince(t['Escalated On'])>D.config.resHours}
+function waPending(t){return t.Status===TS.RES&&!t['Resolution WA Sent On']}
+function callNeeded(t){return t.Status===TS.RES&&t['Resolution WA Sent On']&&hrsSince(t['Resolution WA Sent On'])>D.config.replyHours}
+function everNS(t){return /NOT Satisfied/.test(t.History||'')}
+function pill(t){
+  var m={};m[TS.ESC]='p-esc';m[TS.REESC]='p-reesc';m[TS.RES]='p-res';m[TS.SAT]='p-sat';m[TS.NR]='p-nr';
+  var s='<span class="pill '+(m[t.Status]||'')+'">'+esc(t.Status)+(t.Level>1&&t.Status!==TS.SAT?' · L'+t.Level:'')+'</span>';
+  if(isOverdue(t))s+=' <span class="pill p-over">Overdue '+Math.round(hrsSince(t['Escalated On']))+'h</span>';
+  else if((t.Status===TS.ESC)&&isOld(t))s+=' <span class="pill p-old">Email not sent</span>';
+  if(callNeeded(t))s+=' <span class="pill p-over">Call parent</span>';
+  return s;
+}
+function rt(n){return n==null||n===''?'–':'<span class="r r'+n+'">'+n+'</span>'}
+function fdt(ms){if(!ms)return '—';var d=new Date(ms);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+', '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+function tickets(){return D.tickets.filter(function(t){return inRange(t['Received On'])})}
+function responses(){return D.responses.filter(function(r){return inRange(r.ts)})}
+
+/* ---------- render ---------- */
+function render(){
+  if(!D)return;
+  var R=responses(),T=tickets();
+  var low=R.filter(function(r){return r.overall&&r.overall<=D.config.threshold}).length;
+  var manual=T.filter(function(t){return /^Manual/.test(t.Trigger)}).length;
+  var pend=T.filter(function(t){return t.Status===TS.ESC||t.Status===TS.REESC});
+  var over=T.filter(isOverdue).length, old=pend.filter(isOld).length;
+  var resolved=T.filter(function(t){return t['Resolved On']||t.Status===TS.SAT||t.Status===TS.NR||t.Status===TS.RES}).length;
+  var awaiting=T.filter(function(t){return t.Status===TS.RES}).length;
+  var sat=T.filter(function(t){return t.Status===TS.SAT}).length;
+  var ns=T.filter(everNS).length, nsNow=T.filter(function(t){return t.Status===TS.REESC}).length;
+  var nr=T.filter(function(t){return t.Status===TS.NR}).length;
+  var K=[
+    ['Feedback received',R.length,uniqParents(R)+' parents','', 'fb:'],
+    ['Overall ≤ '+D.config.threshold+' / complaints',low+manual,pct(low+manual,R.length)+' of feedback'+(manual?' · '+manual+' manual':''),'amber','fb:low'],
+    ['Escalations',T.length,'tickets raised','blue','tk:'],
+    ['Pending resolution',pend.length,(over?over+' overdue':'none overdue')+(old?' · '+old+' old':''),over?'red':'amber','tk:pend'],
+    ['Resolved',resolved,pct(resolved,T.length)+' of escalations','blue','tk:res'],
+    ['Awaiting parent reply',awaiting,T.filter(callNeeded).length+' need a call','amber','tk:'+TS.RES],
+    ['Satisfied',sat,'tickets closed'+(nr?' · '+nr+' no response':''),'green','tk:'+TS.SAT],
+    ['Not satisfied',ns,nsNow+' re-escalated now','red','tk:ns']
+  ];
+  $('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[3]+'" onclick="jump(\''+k[4]+'\')"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'}).join('');
+
+  var F=[['Feedback received',R.length],['Overall ≤ 4 / complaint',low+manual],['Escalated',T.length],['Resolution given',resolved],['Parent satisfied',sat]];
+  var mx=Math.max(1,R.length);
+  $('funnel').innerHTML=F.map(function(f,i){return '<div class="f"><span>'+f[0]+'</span><div class="bar"><i style="width:'+(f[1]/mx*100)+'%;background:'+['#1F3864','#E09B1E','#2457A6','#5B7DB8','#2E7D4F'][i]+'"></i></div><b>'+f[1]+'</b></div>'}).join('');
+
+  function av(k){var a=R.map(function(r){return r[k]}).filter(function(x){return x});return a.length?(a.reduce(function(s,x){return s+x},0)/a.length).toFixed(2):'–'}
+  $('avg').innerHTML='<div><b>'+av('overall')+'</b><span>Overall</span></div><div><b>'+av('tl')+'</b><span>Teaching &amp; Learning</span></div><div><b>'+av('env')+'</b><span>Environment &amp; Safety</span></div>';
+  var cnt=[0,0,0,0,0,0];R.forEach(function(r){if(r.overall)cnt[r.overall]++});
+  var cm=Math.max.apply(null,cnt.concat(1));
+  $('dist').innerHTML=[5,4,3,2,1].map(function(n){return '<div class="f"><span>'+n+' ★</span><div class="bar"><i style="width:'+(cnt[n]/cm*100)+'%;background:'+(n>=5?'#2E7D4F':n==4?'#D4A017':'#C0392B')+'"></i></div><b>'+cnt[n]+'</b></div>'}).join('');
+
+  var by={};R.forEach(function(r){if(!r.ts)return;var d=new Date(r.ts),k=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);by[k]=by[k]||[0,0];by[k][0]++;if(r.overall&&r.overall<=D.config.threshold)by[k][1]++});
+  var ks=Object.keys(by).sort();var dm=Math.max.apply(null,ks.map(function(k){return by[k][0]}).concat(1));
+  $('days').innerHTML=ks.map(function(k){var p=by[k][1]/by[k][0]*100;return '<div class="d low" style="height:'+(by[k][0]/dm*100)+'%;--p:'+p+'%" title="'+k+': '+by[k][0]+' feedback, '+by[k][1]+' low"></div>'}).join('')||'<div class="empty" style="width:100%">No feedback in this period</div>';
+  $('dlab').innerHTML=ks.length?'<span>'+dlabel(ks[0])+'</span><span>'+dlabel(ks[ks.length-1])+'</span>':'';
+
+  var ss=$('fs'),cur=ss.value;ss.innerHTML='<option value="">All statuses</option><option value="pend">Pending resolution</option><option value="over">Overdue</option><option value="res">Resolved (any)</option><option value="ns">Ever not satisfied</option>'+[TS.ESC,TS.REESC,TS.RES,TS.SAT,TS.NR].map(function(s){return '<option>'+s+'</option>'}).join('');ss.value=cur;
+  renderActions();renderTickets();renderFeedback();
+}
+function uniqParents(R){var s={};R.forEach(function(r){s[(r.mobile||r.parent||'').replace(/\D/g,'').slice(-10)||r.parent]=1});return Object.keys(s).length}
+function pct(a,b){return b?Math.round(a/b*100)+'%':'0%'}
+function dlabel(k){var p=k.split('-');return p[2]+'/'+p[1]}
+
+function card(t,cls,extra){
+  return '<div class="tc '+cls+'" onclick="openT(\''+esc(t['Ticket ID'])+'\')"><div class="a"><span>'+esc(t['Ticket ID'])+' · '+fdt(t['Received On'])+'</span><span>Overall '+rt(t.Overall)+'</span></div>'+
+  '<div class="b">'+esc(t['Parent Name'])+' <span style="font-weight:normal;color:#5b6477">— '+esc(t['Student Name'])+', '+esc(t['Class & Section'])+'</span></div>'+
+  '<div class="c2">'+esc(t['Improvement Feedback']||t.Trigger)+'</div><div style="margin-top:6px">'+pill(t)+(extra||'')+'</div></div>';
+}
+function renderActions(){
+  var T=tickets();
+  var G=[
+    ['Resolution overdue (more than '+D.config.resHours+' hrs)','Reminder emails go automatically every day. Follow up with the escalation owners.',T.filter(isOverdue),'red'],
+    ['Re-escalated – parent not satisfied','Waiting for a revised resolution.',T.filter(function(t){return t.Status===TS.REESC&&!isOverdue(t)}),'red'],
+    ['Send resolution to parent on WhatsApp','Resolution received. Open the ticket → Send on WhatsApp.',T.filter(waPending),'amber'],
+    ['Call parent – no reply after '+D.config.replyHours+' hrs','WhatsApp sent but no Satisfied / Not Satisfied yet. Call and record the answer.',T.filter(callNeeded),'red'],
+    ['Awaiting parent reply','WhatsApp sent; record Satisfied / Not Satisfied when the parent replies.',T.filter(function(t){return t.Status===TS.RES&&t['Resolution WA Sent On']&&!callNeeded(t)}),'amber'],
+    ['Waiting for resolution (within '+D.config.resHours+' hrs)','Escalation email sent.',T.filter(function(t){return t.Status===TS.ESC&&!isOld(t)&&!isOverdue(t)}),''],
+    ['Old responses – escalation email not sent','Imported from before the system started. Open a ticket to send the escalation email, or enter the resolution directly.',T.filter(function(t){return t.Status===TS.ESC&&isOld(t)}),'grey']
+  ];
+  var n=0;G.slice(0,5).forEach(function(g){n+=g[2].length});$('actc').textContent=n;$('actc').style.display=n?'inline':'none';
+  $('p-act').innerHTML=G.map(function(g){
+    if(!g[2].length)return '';
+    return '<div class="grp"><h4>'+g[0]+' <span class="n">'+g[2].length+'</span> <span class="hint">'+g[1]+'</span></h4><div class="cards">'+g[2].map(function(t){return card(t,g[3])}).join('')+'</div></div>';
+  }).join('')||'<div class="empty">Nothing needs action right now.</div>';
+}
+function tkMatch(t,f){
+  if(!f)return true;
+  if(f==='pend')return t.Status===TS.ESC||t.Status===TS.REESC;
+  if(f==='over')return isOverdue(t);
+  if(f==='res')return !!t['Resolved On']||t.Status===TS.SAT||t.Status===TS.NR||t.Status===TS.RES;
+  if(f==='ns')return everNS(t);
+  return t.Status===f;
+}
+function renderTickets(){
+  var q=$('q1').value.toLowerCase(),f=$('fs').value;
+  var T=tickets().filter(function(t){return tkMatch(t,f)&&(!q||[t['Ticket ID'],t['Parent Name'],t['Student Name'],t['Class & Section'],t.Mobile,t['Improvement Feedback']].join(' ').toLowerCase().indexOf(q)>-1)})
+    .sort(function(a,b){return (b['Received On']||0)-(a['Received On']||0)});
+  $('tkt').innerHTML=T.length?'<table class="dt"><tr><th>Ticket</th><th>Received</th><th>Parent / Student</th><th>O</th><th>T&amp;L</th><th>Env</th><th>Concern</th><th>Status</th><th>Resolution</th></tr>'+
+    T.map(function(t){return '<tr class="clk" onclick="openT(\''+esc(t['Ticket ID'])+'\')"><td><b>'+esc(t['Ticket ID'])+'</b></td><td>'+fdt(t['Received On'])+'</td><td><b>'+esc(t['Parent Name'])+'</b><br><span style="color:#5b6477">'+esc(t['Student Name'])+' · '+esc(t['Class & Section'])+'</span></td><td>'+rt(t.Overall)+'</td><td>'+rt(t['Teaching & Learning'])+'</td><td>'+rt(t['Environment & Safety'])+'</td><td class="cm">'+esc(trunc(t['Improvement Feedback']||t.Trigger,140))+'</td><td>'+pill(t)+'</td><td class="cm">'+esc(trunc(t.Resolution,90))+'</td></tr>'}).join('')+'</table>':'<div class="empty">No tickets match.</div>';
+}
+function renderFeedback(){
+  var q=$('q2').value.toLowerCase(),f=$('fo').value;
+  var tmap={};D.tickets.forEach(function(t){tmap[t['Source Row']]=t});
+  var R=responses().filter(function(r){
+    if(f==='low'&&!(r.overall&&r.overall<=D.config.threshold))return false;
+    if(f==='5'&&r.overall!==5)return false;
+    if(f==='cm5'&&!(r.overall===5&&(r.improve||'').length>3))return false;
+    return !q||[r.parent,r.student,r.cls,r.mobile,r.improve,r.suggest].join(' ').toLowerCase().indexOf(q)>-1;
+  }).sort(function(a,b){return (b.ts||0)-(a.ts||0)});
+  $('fbt').innerHTML=R.length?'<table class="dt"><tr><th>Received</th><th>Parent / Student</th><th>Mobile</th><th>O</th><th>T&amp;L</th><th>Env</th><th>How can we improve</th><th>Suggestions</th><th>Ticket</th></tr>'+
+    R.map(function(r){var t=tmap[r.row];return '<tr><td>'+fdt(r.ts)+'</td><td><b>'+esc(r.parent)+'</b><br><span style="color:#5b6477">'+esc(r.student)+' · '+esc(r.cls)+'</span></td><td>'+esc(r.mobile)+'</td><td>'+rt(r.overall)+'</td><td>'+rt(r.tl)+'</td><td>'+rt(r.env)+'</td><td class="cm">'+esc(trunc(r.improve,180))+'</td><td class="cm">'+esc(trunc(r.suggest,120))+'</td><td>'+
+      (t?'<a href="#" onclick="openT(\''+esc(t['Ticket ID'])+'\');return false">'+esc(t['Ticket ID'])+'</a><br>'+pill(t):'<button class="sbtn" onclick="escalateRow('+r.row+')">Escalate</button>')+'</td></tr>'}).join('')+'</table>':'<div class="empty">No feedback matches.</div>';
+}
+function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n)+'…':s}
+function tab(b){[].forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.toggle('on',x===b)});[].forEach.call(document.querySelectorAll('.pane'),function(p){p.classList.toggle('on',p.id==='p-'+b.dataset.p)})}
+function jump(s){var p=s.split(':');var b=document.querySelector('.tab[data-p="'+p[0]+'"]');tab(b);
+  if(p[0]==='tk'){$('fs').value=p[1];renderTickets()} else {$('fo').value=p[1];renderFeedback()}
+  b.scrollIntoView({behavior:'smooth'});}
+
+/* ---------- WhatsApp messages ---------- */
+function waText(t,type){
+  var n=t['Parent Name'];
+  if(type==='resolution')return 'Dear '+n+',\n\nGreetings from BIPS!\n\nThank you for sharing your feedback regarding '+t['Student Name']+', Class '+t['Class & Section']+'. We have reviewed your concern carefully.\n\nTicket No: '+t['Ticket ID']+'\nYour concern: '+shortC(t)+'\nAction taken: '+t.Resolution+'\n\nKindly let us know if you are satisfied with the action taken. Please tap the link below and select Satisfied or Not Satisfied (it takes 10 seconds):\n'+location.origin+t['Parent Link']+'\n\nIf Not Satisfied, please write what more we can do, and our team will get back to you on priority.\n\nWarm regards,\n'+SCHOOL;
+  if(type==='closed')return 'Dear '+n+',\n\nThank you for confirming. We are glad your concern has been resolved, and your ticket '+t['Ticket ID']+' is now closed.\n\nWe truly value your partnership in '+t['Student Name']+"'s growth. Please feel free to reach out anytime.\n\nWarm regards,\n"+SCHOOL;
+  if(type==='notsat')return 'Dear '+n+',\n\nWe regret that the action taken did not fully meet your expectations. Your concern (Ticket '+t['Ticket ID']+') has been escalated again to senior management, and we will get back to you within 24 hours.\n\nWarm regards,\n'+SCHOOL;
+  return '';
+}
+function shortC(t){var c=String(t['Improvement Feedback']||'').replace(/\s+/g,' ').trim();return c?(c.length>220?c.slice(0,220)+'…':c):'Overall rating '+t.Overall+'/5'}
+function waNum(m){var d=String(m||'').replace(/\D/g,'');if(d.length>10)d=d.slice(-10);return d.length===10?'91'+d:''}
+function sendWA(id,type){
+  var t=find(id),num=waNum(t.Mobile),txt=waText(t,type);
+  if(!num){copy(txt);toast('Mobile number looks wrong – message copied instead');return}
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(txt),'_blank');
+  run('apiMarkWhatsApp',KEY,id,type).then(function(){if(type==='resolution'){t['Resolution WA Sent On']=Date.now();render();openT(id)}});
+}
+function copy(txt){try{navigator.clipboard.writeText(txt);toast('Message copied')}catch(e){var a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();toast('Message copied')}}
+
+/* ---------- drawer ---------- */
+function find(id){return D.tickets.filter(function(t){return t['Ticket ID']===id})[0]}
+function openT(id){
+  var t=find(id);if(!t)return;
+  $('drt').textContent=t['Ticket ID'];
+  var h='<div style="margin-bottom:10px">'+pill(t)+'</div><dl class="kv">'+
+    kv('Received',fdt(t['Received On']))+kv('Parent',t['Parent Name'])+kv('Mobile',t.Mobile)+kv('Student',t['Student Name'])+kv('Class',t['Class & Section'])+
+    '<dt>Ratings</dt><dd>Overall '+rt(t.Overall)+' · T&amp;L '+rt(t['Teaching & Learning'])+' · Env '+rt(t['Environment & Safety'])+'</dd>'+
+    kv('How can we improve',t['Improvement Feedback']||'—')+kv('Suggestions',t.Suggestions||'—')+kv('Trigger',t.Trigger)+
+    kv('Escalation email',t['Escalation Email']+(t['Escalation Email']==='Sent'?' · '+fdt(t['Escalated On']):''))+
+    (t.Resolution?kv('Resolution',t.Resolution)+kv('Resolved by',(t['Resolved By']||'')+' · '+fdt(t['Resolved On'])):'')+
+    (t['Parent Response']?kv('Parent response',t['Parent Response']+' ('+(t['Response Via']||'')+') · '+fdt(t['Response On'])+(t['Response Remarks']?'\n'+t['Response Remarks']:'')):'')+'</dl>';
+  var id2="'"+esc(id)+"'";
+  if(t.Status===TS.ESC||t.Status===TS.REESC){
+    if(isOld(t))h+='<div class="box"><h5>Old response – not yet escalated</h5><div style="font-size:13px;margin-bottom:8px">Send the escalation email to '+esc(D.config.resolvers.join(' & '))+' with the Submit Resolution button.</div><button class="btn2 pri" onclick="resend('+id2+')">Send escalation email</button></div>';
+    else h+='<div class="box"><h5>Waiting for resolution</h5><div style="font-size:13px;margin-bottom:8px">Due '+fdt(t['Escalated On']+D.config.resHours*36e5)+'.</div><button class="btn2" onclick="resend('+id2+')">Resend escalation email</button></div>';
+    h+='<div class="box"><h5>Enter resolution here (if received by phone / in person)</h5><select id="rby">'+D.config.resolvers.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select><textarea id="rtx" placeholder="Action taken…"></textarea><button class="btn2 pri" onclick="saveRes('+id2+')">Save resolution</button></div>';
+  }
+  if(t.Status===TS.RES){
+    h+='<div class="box"><h5>Step 1 · Send resolution to parent</h5><div class="msgprev">'+esc(waText(t,'resolution'))+'</div><div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'resolution\')">Send on WhatsApp</button><button class="btn2" onclick="copy(waText(find('+id2+'),\'resolution\'))">Copy message</button></div>'+
+      (t['Resolution WA Sent On']?'<div style="font-size:12px;color:#2E7D4F;margin-top:6px">✓ Sent '+fdt(t['Resolution WA Sent On'])+(/WhatsApp auto-sent: resolution/.test(t.History||'')?' automatically (WhatsApp API)':'')+'</div>':(D.config.waAuto&&/auto-send FAILED \(resolution/.test(t.History||'')?'<div style="font-size:12px;color:#C0392B;margin-top:6px">Automatic WhatsApp failed – see History. Please send manually.</div>':''))+'</div>';
+    h+='<div class="box"><h5>Step 2 · Parent\'s answer</h5><div style="font-size:12.5px;color:#374151;margin-bottom:8px">The parent answers through the link in the WhatsApp message – the ticket updates automatically. Use the buttons below only if the parent answered by call or in person.</div><select id="via"><option>Phone call</option><option>WhatsApp reply</option><option>In person</option></select><textarea id="rmk" placeholder="Parent\'s words / reason (required if Not Satisfied)"></textarea><div class="acts"><button class="btn2 ok" onclick="presp('+id2+',\'Satisfied\')">Satisfied</button><button class="btn2 no" onclick="presp('+id2+',\'Not Satisfied\')">Not Satisfied</button><button class="btn2" onclick="presp('+id2+',\'No Response\')">Close – no response</button></div></div>';
+  }
+  var autoC=/WhatsApp auto-sent: closed/.test(t.History||''),autoN=(String(t.History||'').split('WhatsApp auto-sent: notsat').length-1)>=(Number(t.Level||1)-1)&&t.Level>1;
+  if(t.Status===TS.SAT)h+='<div class="box"><h5>Thank the parent</h5>'+(autoC?'<div style="font-size:12.5px;color:#2E7D4F;margin-bottom:8px">✓ Closure message sent automatically on WhatsApp</div>':'')+'<div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'closed\')">'+(autoC?'Send again manually':'Send closure message on WhatsApp')+'</button></div></div>';
+  if(t.Status===TS.REESC)h+='<div class="box"><h5>Inform the parent</h5>'+(autoN?'<div style="font-size:12.5px;color:#2E7D4F;margin-bottom:8px">✓ "Escalated again" message sent automatically on WhatsApp</div>':'')+'<div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'notsat\')">'+(autoN?'Send again manually':'Send "escalated again" message on WhatsApp')+'</button></div></div>';
+  h+='<h5 style="margin:16px 0 6px;color:#5b6477">History</h5><div class="hist">'+esc(t.History||'')+'</div>';
+  $('drb').innerHTML=h;$('dr').classList.add('on');$('ov').classList.add('on');
+}
+function kv(k,v){return '<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>'}
+function closeDr(){$('dr').classList.remove('on');$('ov').classList.remove('on')}
+function busy(p,msg,id){toast('Saving…');return p.then(function(){toast(msg);return run('apiGetData',KEY)}).then(function(j){D=JSON.parse(j);render();if(id)openT(id)}).catch(function(e){toast('Error: '+e.message)})}
+function resend(id){if(!confirm('Send the escalation email now?'))return;busy(run('apiResendEscalation',KEY,id),'Escalation email sent',id)}
+function saveRes(id){var tx=$('rtx').value.trim();if(tx.length<5){toast('Write the resolution first');return}busy(run('apiSaveResolution',KEY,id,tx,$('rby').value),'Resolution saved',id)}
+function presp(id,r){
+  var rm=$('rmk').value.trim();
+  if(r==='Not Satisfied'&&rm.length<3){toast('Write why the parent is not satisfied');return}
+  var q={'Satisfied':'Mark as Satisfied and close the ticket? A closure email will be sent.','Not Satisfied':'Mark as Not Satisfied? The ticket will be re-escalated by email.','No Response':'Close this ticket with no response from parent?'}[r];
+  if(!confirm(q))return;
+  busy(run('apiParentResponse',KEY,id,r,$('via').value,rm),r==='Not Satisfied'?'Re-escalated':'Saved',id);
+}
+function escalateRow(row){var why=prompt('Reason for escalating this response (e.g. complaint in comments):','Complaint in comments');if(why===null)return;
+  busy(run('apiEscalateResponse',KEY,row,why),'Ticket created and escalation email sent')}
+start();
+setInterval(function(){if(KEY&&D&&!$('dr').classList.contains('on')&&document.visibilityState==='visible')load()},60000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&KEY&&D)load()});
+</script>
+</body>
+</html>
