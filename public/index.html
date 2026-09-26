@@ -27,7 +27,7 @@ button{font:inherit;cursor:pointer}
 .kpi.red{border-top-color:var(--red)}.kpi.red .v{color:var(--red)}
 .kpi.amber{border-top-color:#E09B1E}.kpi.green{border-top-color:var(--green)}.kpi.green .v{color:var(--green)}
 .kpi.blue{border-top-color:var(--blue)}
-.row{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:12px;margin-top:12px}
+.row{display:grid;grid-template-columns:1fr 1fr 1.1fr 1fr;gap:12px;margin-top:12px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .panel h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
 .funnel .f{display:grid;grid-template-columns:150px 1fr 48px;align-items:center;gap:8px;margin:7px 0;font-size:13px}
@@ -74,6 +74,19 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
 .dt tr.clk{cursor:pointer}
 .sbtn{padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:bold}
 .sbtn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.cat{display:inline-block;background:#EEF2FA;color:#2457A6;border:1px solid #D3DEF2;border-radius:10px;padding:1px 8px;font-size:11.5px;font-weight:bold;margin:1px 0}
+.act{font-size:12.5px;margin:4px 0;line-height:1.4}.act .own{color:var(--mute);font-size:11.5px}
+.pr-high{background:var(--red);color:#fff}.pr-medium{background:var(--amberbg);color:var(--amber)}.pr-low{background:var(--greybg);color:var(--grey)}
+.p-nc{background:var(--greenbg);color:var(--green)}.p-dup{background:var(--greybg);color:var(--grey)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+.tw table.dt{border:0;min-width:1500px}
+.dt th.q{min-width:260px;white-space:normal;line-height:1.3}
+.dt th.rt{min-width:84px;white-space:normal;line-height:1.3}
+.dt td.full{white-space:pre-wrap;min-width:260px;color:#374151}
+.dt tr.dup td{opacity:.55}
+.dt td.pc{min-width:170px}.dt .wide{min-width:340px}
+.funnel .f.clk{cursor:pointer}.funnel .f.clk:hover span{text-decoration:underline}
+.topc .f{grid-template-columns:170px 1fr 34px}
 .empty{color:var(--mute);padding:14px;background:#fff;border:1px dashed var(--line);border-radius:8px}
 /* drawer */
 .ov{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;z-index:10}
@@ -82,7 +95,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
 .dr .hd{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px}
 .dr .hd b{font-size:17px;flex:1}.dr .hd button{background:none;border:0;color:#fff;font-size:22px}
 .dr .bd{padding:16px 18px;overflow:auto;flex:1}
-.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;font-size:13px;margin-bottom:12px}
+.kv{display:grid;grid-template-columns:190px 1fr;gap:6px 10px;font-size:13px;margin-bottom:12px}
 .kv dt{color:var(--mute);font-weight:bold}.kv dd{margin:0;white-space:pre-wrap}
 .box{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;background:#FAFBFD}
 .box h5{margin:0 0 8px;font-size:13px;color:var(--brand);text-transform:uppercase;letter-spacing:.04em}
@@ -132,6 +145,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
     <div class="row">
       <div class="panel"><h3>Escalation progress</h3><div class="funnel" id="funnel"></div></div>
       <div class="panel"><h3>Ratings</h3><div class="avg" id="avg"></div><div class="dist" id="dist"></div></div>
+      <div class="panel"><h3>Top concern areas <span style="font-weight:normal;text-transform:none">(click to see the feedback)</span></h3><div class="funnel topc" id="topc"></div></div>
       <div class="panel"><h3>Feedback received per day <span style="font-weight:normal;text-transform:none">(red = Overall ≤ 4)</span></h3><div class="days" id="days"></div><div class="dlab" id="dlab"></div></div>
     </div>
     <div class="tabs">
@@ -150,7 +164,9 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
     <div class="pane" id="p-fb">
       <div class="filters">
         <input id="q2" placeholder="Search parent, student, class, comment…" oninput="renderFeedback()">
-        <select id="fo" onchange="renderFeedback()"><option value="">All ratings</option><option value="low">Overall ≤ 4</option><option value="5">Overall 5</option><option value="cm5">Overall 5 with comment</option></select>
+        <select id="fo" onchange="renderFeedback()"><option value="">All ratings</option><option value="low">Complaints (Overall ≤ 4)</option><option value="pos">Overall ≤ 4 but positive comment</option><option value="5">Overall 5</option><option value="cm5">Overall 5 with comment</option></select>
+        <select id="fc" onchange="renderFeedback()"><option value="">All concern areas</option></select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="fd" onchange="renderFeedback()"> Show duplicate entries</label>
       </div>
       <div id="fbt"></div>
     </div>
@@ -163,7 +179,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
 <div class="toast" id="toast"></div>
 
 <script>
-var KEY='', D=null, TS={ESC:'Escalated',REESC:'Re-escalated',RES:'Resolved – Awaiting Parent',SAT:'Closed – Satisfied',NR:'Closed – No Response'};
+var KEY='', D=null, TS={ESC:'Escalated',REESC:'Re-escalated',RES:'Resolved – Awaiting Parent',SAT:'Closed – Satisfied',NR:'Closed – No Response',NC:'Not a Complaint',DUP:'Duplicate'};
 var SCHOOL='Bhupindra International Public School';
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -223,7 +239,7 @@ function waPending(t){return t.Status===TS.RES&&!t['Resolution WA Sent On']}
 function callNeeded(t){return t.Status===TS.RES&&t['Resolution WA Sent On']&&hrsSince(t['Resolution WA Sent On'])>D.config.replyHours}
 function everNS(t){return /NOT Satisfied/.test(t.History||'')}
 function pill(t){
-  var m={};m[TS.ESC]='p-esc';m[TS.REESC]='p-reesc';m[TS.RES]='p-res';m[TS.SAT]='p-sat';m[TS.NR]='p-nr';
+  var m={};m[TS.ESC]='p-esc';m[TS.REESC]='p-reesc';m[TS.RES]='p-res';m[TS.SAT]='p-sat';m[TS.NR]='p-nr';m[TS.NC]='p-nc';m[TS.DUP]='p-dup';
   var s='<span class="pill '+(m[t.Status]||'')+'">'+esc(t.Status)+(t.Level>1&&t.Status!==TS.SAT?' · L'+t.Level:'')+'</span>';
   if(isOverdue(t))s+=' <span class="pill p-over">Overdue '+Math.round(hrsSince(t['Escalated On']))+'h</span>';
   else if((t.Status===TS.ESC)&&isOld(t))s+=' <span class="pill p-old">Email not sent</span>';
@@ -232,14 +248,25 @@ function pill(t){
 }
 function rt(n){return n==null||n===''?'–':'<span class="r r'+n+'">'+n+'</span>'}
 function fdt(ms){if(!ms)return '—';var d=new Date(ms);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+', '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
-function tickets(){return D.tickets.filter(function(t){return inRange(t['Received On'])})}
-function responses(){return D.responses.filter(function(r){return inRange(r.ts)})}
+function live(t){return t.Status!==TS.NC&&t.Status!==TS.DUP}
+function tickets(){return D.tickets.filter(function(t){return live(t)&&inRange(t['Received On'])})}
+function allTickets(){return D.tickets.filter(function(t){return inRange(t['Received On'])})}
+function responses(){return D.responses.filter(function(r){return !r.dupOf&&inRange(r.ts)})}
+function isComplaint(r){return r.overall&&r.overall<=D.config.threshold&&!r.positive}
+function resp(row){return D.responses.filter(function(r){return r.row==row})[0]||{}}
+var FULLQ1='If you gave less than 5 stars in any area, please let us know how we can improve to meet your expectations.';
+var FULLQ2='What additional initiatives, support, or opportunities would you like BIPS to offer or incorporate to make your experience with us more enriching and fulfilling?';
+function catChips(r){return (r.categories||[]).map(function(c){return '<span class="cat">'+esc(c)+'</span>'}).join(' ')}
+function prio(p){return p?'<span class="pill pr-'+p.toLowerCase()+'">'+p+' priority</span>':''}
+function actList(r){return (r.actions||[]).map(function(a){return '<div class="act"><b>'+esc(a.category)+'</b> – '+esc(a.action)+' <span class="own">Owner: '+esc(a.owner)+'</span></div>'}).join('')}
 
 /* ---------- render ---------- */
 function render(){
   if(!D)return;
   var R=responses(),T=tickets();
-  var low=R.filter(function(r){return r.overall&&r.overall<=D.config.threshold}).length;
+  var low=R.filter(isComplaint).length;
+  var posEx=R.filter(function(r){return r.overall&&r.overall<=D.config.threshold&&r.positive}).length;
+  var dups=D.responses.filter(function(r){return r.dupOf&&inRange(r.ts)}).length;
   var manual=T.filter(function(t){return /^Manual/.test(t.Trigger)}).length;
   var pend=T.filter(function(t){return t.Status===TS.ESC||t.Status===TS.REESC});
   var over=T.filter(isOverdue).length, old=pend.filter(isOld).length;
@@ -249,8 +276,8 @@ function render(){
   var ns=T.filter(everNS).length, nsNow=T.filter(function(t){return t.Status===TS.REESC}).length;
   var nr=T.filter(function(t){return t.Status===TS.NR}).length;
   var K=[
-    ['Feedback received',R.length,uniqParents(R)+' parents','', 'fb:'],
-    ['Overall ≤ '+D.config.threshold+' / complaints',low+manual,pct(low+manual,R.length)+' of feedback'+(manual?' · '+manual+' manual':''),'amber','fb:low'],
+    ['Feedback received',R.length,uniqParents(R)+' parents'+(dups?' · '+dups+' duplicate'+(dups>1?'s':'')+' removed':''),'', 'fb:'],
+    ['Complaints (Overall ≤ '+D.config.threshold+')',low+manual,pct(low+manual,R.length)+' of feedback'+(posEx?' · '+posEx+' positive comments not counted':'')+(manual?' · '+manual+' manual':''),'amber','fb:low'],
     ['Escalations',T.length,'tickets raised','blue','tk:'],
     ['Pending resolution',pend.length,(over?over+' overdue':'none overdue')+(old?' · '+old+' old':''),over?'red':'amber','tk:pend'],
     ['Resolved',resolved,pct(resolved,T.length)+' of escalations','blue','tk:res'],
@@ -260,22 +287,26 @@ function render(){
   ];
   $('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[3]+'" onclick="jump(\''+k[4]+'\')"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'}).join('');
 
-  var F=[['Feedback received',R.length],['Overall ≤ 4 / complaint',low+manual],['Escalated',T.length],['Resolution given',resolved],['Parent satisfied',sat]];
+  var F=[['Feedback received',R.length],['Complaints',low+manual],['Escalated',T.length],['Resolution given',resolved],['Parent satisfied',sat]];
   var mx=Math.max(1,R.length);
   $('funnel').innerHTML=F.map(function(f,i){return '<div class="f"><span>'+f[0]+'</span><div class="bar"><i style="width:'+(f[1]/mx*100)+'%;background:'+['#1F3864','#E09B1E','#2457A6','#5B7DB8','#2E7D4F'][i]+'"></i></div><b>'+f[1]+'</b></div>'}).join('');
 
   function av(k){var a=R.map(function(r){return r[k]}).filter(function(x){return x});return a.length?(a.reduce(function(s,x){return s+x},0)/a.length).toFixed(2):'–'}
-  $('avg').innerHTML='<div><b>'+av('overall')+'</b><span>Overall</span></div><div><b>'+av('tl')+'</b><span>Teaching &amp; Learning</span></div><div><b>'+av('env')+'</b><span>Environment &amp; Safety</span></div>';
+  $('avg').innerHTML='<div><b>'+av('overall')+'</b><span>Overall Experience</span></div><div><b>'+av('tl')+'</b><span>Teaching &amp; Learning</span></div><div><b>'+av('env')+'</b><span>School Environment &amp; Safety</span></div>';
   var cnt=[0,0,0,0,0,0];R.forEach(function(r){if(r.overall)cnt[r.overall]++});
   var cm=Math.max.apply(null,cnt.concat(1));
   $('dist').innerHTML=[5,4,3,2,1].map(function(n){return '<div class="f"><span>'+n+' ★</span><div class="bar"><i style="width:'+(cnt[n]/cm*100)+'%;background:'+(n>=5?'#2E7D4F':n==4?'#D4A017':'#C0392B')+'"></i></div><b>'+cnt[n]+'</b></div>'}).join('');
 
-  var by={};R.forEach(function(r){if(!r.ts)return;var d=new Date(r.ts),k=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);by[k]=by[k]||[0,0];by[k][0]++;if(r.overall&&r.overall<=D.config.threshold)by[k][1]++});
+  var by={};R.forEach(function(r){if(!r.ts)return;var d=new Date(r.ts),k=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);by[k]=by[k]||[0,0];by[k][0]++;if(isComplaint(r))by[k][1]++});
   var ks=Object.keys(by).sort();var dm=Math.max.apply(null,ks.map(function(k){return by[k][0]}).concat(1));
   $('days').innerHTML=ks.map(function(k){var p=by[k][1]/by[k][0]*100;return '<div class="d low" style="height:'+(by[k][0]/dm*100)+'%;--p:'+p+'%" title="'+k+': '+by[k][0]+' feedback, '+by[k][1]+' low"></div>'}).join('')||'<div class="empty" style="width:100%">No feedback in this period</div>';
   $('dlab').innerHTML=ks.length?'<span>'+dlabel(ks[0])+'</span><span>'+dlabel(ks[ks.length-1])+'</span>':'';
 
-  var ss=$('fs'),cur=ss.value;ss.innerHTML='<option value="">All statuses</option><option value="pend">Pending resolution</option><option value="over">Overdue</option><option value="res">Resolved (any)</option><option value="ns">Ever not satisfied</option>'+[TS.ESC,TS.REESC,TS.RES,TS.SAT,TS.NR].map(function(s){return '<option>'+s+'</option>'}).join('');ss.value=cur;
+  var cc={};R.filter(isComplaint).forEach(function(r){(r.categories||[]).forEach(function(c){cc[c]=(cc[c]||0)+1})});
+  var ck=Object.keys(cc).sort(function(a,b){return cc[b]-cc[a]}),cmx=Math.max.apply(null,ck.map(function(k){return cc[k]}).concat(1));
+  $('topc').innerHTML=ck.length?ck.map(function(k){return '<div class="f clk" onclick="jumpCat(\''+esc(k).replace(/'/g,"\\'")+'\')"><span>'+esc(k)+'</span><div class="bar"><i style="width:'+(cc[k]/cmx*100)+'%;background:#C0392B"></i></div><b>'+cc[k]+'</b></div>'}).join(''):'<div class="empty">No complaints in this period</div>';
+  var fc=$('fc'),cv=fc.value;fc.innerHTML='<option value="">All concern areas</option>'+ck.map(function(k){return '<option>'+esc(k)+'</option>'}).join('');fc.value=cv;
+  var ss=$('fs'),cur=ss.value;ss.innerHTML='<option value="">All statuses</option><option value="pend">Pending resolution</option><option value="over">Overdue</option><option value="res">Resolved (any)</option><option value="ns">Ever not satisfied</option>'+[TS.ESC,TS.REESC,TS.RES,TS.SAT,TS.NR,TS.NC,TS.DUP].map(function(s){return '<option>'+s+'</option>'}).join('');ss.value=cur;
   renderActions();renderTickets();renderFeedback();
 }
 function uniqParents(R){var s={};R.forEach(function(r){s[(r.mobile||r.parent||'').replace(/\D/g,'').slice(-10)||r.parent]=1});return Object.keys(s).length}
@@ -285,7 +316,7 @@ function dlabel(k){var p=k.split('-');return p[2]+'/'+p[1]}
 function card(t,cls,extra){
   return '<div class="tc '+cls+'" onclick="openT(\''+esc(t['Ticket ID'])+'\')"><div class="a"><span>'+esc(t['Ticket ID'])+' · '+fdt(t['Received On'])+'</span><span>Overall '+rt(t.Overall)+'</span></div>'+
   '<div class="b">'+esc(t['Parent Name'])+' <span style="font-weight:normal;color:#5b6477">— '+esc(t['Student Name'])+', '+esc(t['Class & Section'])+'</span></div>'+
-  '<div class="c2">'+esc(t['Improvement Feedback']||t.Trigger)+'</div><div style="margin-top:6px">'+pill(t)+(extra||'')+'</div></div>';
+  '<div class="c2">'+esc(t['Improvement Feedback']||t.Trigger)+'</div><div style="margin-top:6px">'+pill(t)+' '+prio(resp(t['Source Row']).priority)+' '+catChips(resp(t['Source Row']))+(extra||'')+'</div></div>';
 }
 function renderActions(){
   var T=tickets();
@@ -314,28 +345,36 @@ function tkMatch(t,f){
 }
 function renderTickets(){
   var q=$('q1').value.toLowerCase(),f=$('fs').value;
-  var T=tickets().filter(function(t){return tkMatch(t,f)&&(!q||[t['Ticket ID'],t['Parent Name'],t['Student Name'],t['Class & Section'],t.Mobile,t['Improvement Feedback']].join(' ').toLowerCase().indexOf(q)>-1)})
+  var src=(f===TS.NC||f===TS.DUP)?allTickets():tickets();
+  var T=src.filter(function(t){return tkMatch(t,f)&&(!q||[t['Ticket ID'],t['Parent Name'],t['Student Name'],t['Class & Section'],t.Mobile,t['Improvement Feedback'],t.Suggestions].join(' ').toLowerCase().indexOf(q)>-1)})
     .sort(function(a,b){return (b['Received On']||0)-(a['Received On']||0)});
-  $('tkt').innerHTML=T.length?'<table class="dt"><tr><th>Ticket</th><th>Received</th><th>Parent / Student</th><th>O</th><th>T&amp;L</th><th>Env</th><th>Concern</th><th>Status</th><th>Resolution</th></tr>'+
-    T.map(function(t){return '<tr class="clk" onclick="openT(\''+esc(t['Ticket ID'])+'\')"><td><b>'+esc(t['Ticket ID'])+'</b></td><td>'+fdt(t['Received On'])+'</td><td><b>'+esc(t['Parent Name'])+'</b><br><span style="color:#5b6477">'+esc(t['Student Name'])+' · '+esc(t['Class & Section'])+'</span></td><td>'+rt(t.Overall)+'</td><td>'+rt(t['Teaching & Learning'])+'</td><td>'+rt(t['Environment & Safety'])+'</td><td class="cm">'+esc(trunc(t['Improvement Feedback']||t.Trigger,140))+'</td><td>'+pill(t)+'</td><td class="cm">'+esc(trunc(t.Resolution,90))+'</td></tr>'}).join('')+'</table>':'<div class="empty">No tickets match.</div>';
+  $('tkt').innerHTML=T.length?'<div class="tw"><table class="dt"><tr><th>Ticket</th><th>Received</th><th>Parent / Student</th><th class="rt">Overall Experience</th><th class="rt">Teaching &amp; Learning</th><th class="rt">School Environment &amp; Safety</th><th class="q">'+FULLQ1+'</th><th class="q">Concern Area &amp; Suggested Action</th><th>Status</th><th class="q">Resolution</th></tr>'+
+    T.map(function(t){var r=resp(t['Source Row']);return '<tr class="clk" onclick="openT(\''+esc(t['Ticket ID'])+'\')"><td><b>'+esc(t['Ticket ID'])+'</b></td><td>'+fdt(t['Received On'])+'</td><td class="pc"><b>'+esc(t['Parent Name'])+'</b><br><span style="color:#5b6477">'+esc(t['Student Name'])+' · '+esc(t['Class & Section'])+'</span></td><td>'+rt(t.Overall)+'</td><td>'+rt(t['Teaching & Learning'])+'</td><td>'+rt(t['Environment & Safety'])+'</td><td class="full">'+esc(t['Improvement Feedback']||'—')+'</td><td class="full">'+prio(r.priority)+' '+catChips(r)+actList(r)+'</td><td>'+pill(t)+'</td><td class="full">'+esc(t.Resolution||'—')+'</td></tr>'}).join('')+'</table></div>':'<div class="empty">No tickets match.</div>';
 }
 function renderFeedback(){
-  var q=$('q2').value.toLowerCase(),f=$('fo').value;
+  var q=$('q2').value.toLowerCase(),f=$('fo').value,fc=$('fc').value,sd=$('fd').checked;
   var tmap={};D.tickets.forEach(function(t){tmap[t['Source Row']]=t});
-  var R=responses().filter(function(r){
-    if(f==='low'&&!(r.overall&&r.overall<=D.config.threshold))return false;
+  var R=D.responses.filter(function(r){
+    if(!inRange(r.ts))return false;
+    if(r.dupOf&&!sd)return false;
+    if(f==='low'&&!isComplaint(r))return false;
+    if(f==='pos'&&!(r.overall&&r.overall<=D.config.threshold&&r.positive))return false;
     if(f==='5'&&r.overall!==5)return false;
     if(f==='cm5'&&!(r.overall===5&&(r.improve||'').length>3))return false;
+    if(fc&&(r.categories||[]).indexOf(fc)<0)return false;
     return !q||[r.parent,r.student,r.cls,r.mobile,r.improve,r.suggest].join(' ').toLowerCase().indexOf(q)>-1;
   }).sort(function(a,b){return (b.ts||0)-(a.ts||0)});
-  $('fbt').innerHTML=R.length?'<table class="dt"><tr><th>Received</th><th>Parent / Student</th><th>Mobile</th><th>O</th><th>T&amp;L</th><th>Env</th><th>How can we improve</th><th>Suggestions</th><th>Ticket</th></tr>'+
-    R.map(function(r){var t=tmap[r.row];return '<tr><td>'+fdt(r.ts)+'</td><td><b>'+esc(r.parent)+'</b><br><span style="color:#5b6477">'+esc(r.student)+' · '+esc(r.cls)+'</span></td><td>'+esc(r.mobile)+'</td><td>'+rt(r.overall)+'</td><td>'+rt(r.tl)+'</td><td>'+rt(r.env)+'</td><td class="cm">'+esc(trunc(r.improve,180))+'</td><td class="cm">'+esc(trunc(r.suggest,120))+'</td><td>'+
-      (t?'<a href="#" onclick="openT(\''+esc(t['Ticket ID'])+'\');return false">'+esc(t['Ticket ID'])+'</a><br>'+pill(t):'<button class="sbtn" onclick="escalateRow('+r.row+')">Escalate</button>')+'</td></tr>'}).join('')+'</table>':'<div class="empty">No feedback matches.</div>';
+  $('fbt').innerHTML=R.length?'<div class="tw"><table class="dt"><tr><th>Received</th><th>Parent / Student / Mobile Number</th><th>Ticket</th><th class="rt">Overall Experience</th><th class="rt">Teaching &amp; Learning</th><th class="rt">School Environment &amp; Safety</th><th class="q">'+FULLQ1+'</th><th class="q">'+FULLQ2+'</th><th class="q wide">Concern Area &amp; Suggested Action</th></tr>'+
+    R.map(function(r){var t=tmap[r.row];
+      var tag=r.dupOf?'<span class="pill p-dup">Duplicate – older entry</span>':(r.overall&&r.overall<=D.config.threshold&&r.positive?'<span class="pill p-nc">Positive comment – not a complaint</span>':'');
+      var tcell=t&&t.Status!==TS.DUP&&t.Status!==TS.NC?'<a href="#" onclick="openT(\''+esc(t['Ticket ID'])+'\');return false">'+esc(t['Ticket ID'])+'</a><br>'+pill(t):(r.dupOf?'':'<button class="sbtn" onclick="escalateRow('+r.row+')">Escalate</button>');
+      return '<tr'+(r.dupOf?' class="dup"':'')+'><td>'+fdt(r.ts)+'</td><td class="pc"><b>'+esc(r.parent)+'</b><br><span style="color:#5b6477">'+esc(r.student)+' · '+esc(r.cls)+'</span><br><span style="color:#5b6477">'+esc(r.mobile)+'</span></td><td>'+tcell+'</td><td>'+rt(r.overall)+'</td><td>'+rt(r.tl)+'</td><td>'+rt(r.env)+'</td><td class="full">'+esc(r.improve||'—')+'</td><td class="full">'+esc(r.suggest||'—')+'</td><td class="full wide">'+tag+(r.dupOf?'':' '+prio(r.priority)+' '+catChips(r)+actList(r))+'</td></tr>'}).join('')+'</table></div>':'<div class="empty">No feedback matches.</div>';
 }
+function jumpCat(c){var b=document.querySelector('.tab[data-p="fb"]');tab(b);$('fo').value='low';$('fc').value=c;renderFeedback();b.scrollIntoView({behavior:'smooth'})}
 function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n)+'…':s}
 function tab(b){[].forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.toggle('on',x===b)});[].forEach.call(document.querySelectorAll('.pane'),function(p){p.classList.toggle('on',p.id==='p-'+b.dataset.p)})}
 function jump(s){var p=s.split(':');var b=document.querySelector('.tab[data-p="'+p[0]+'"]');tab(b);
-  if(p[0]==='tk'){$('fs').value=p[1];renderTickets()} else {$('fo').value=p[1];renderFeedback()}
+  if(p[0]==='tk'){$('fs').value=p[1];renderTickets()} else {$('fo').value=p[1];$('fc').value='';renderFeedback()}
   b.scrollIntoView({behavior:'smooth'});}
 
 /* ---------- WhatsApp messages ---------- */
@@ -363,15 +402,18 @@ function openT(id){
   $('drt').textContent=t['Ticket ID'];
   var h='<div style="margin-bottom:10px">'+pill(t)+'</div><dl class="kv">'+
     kv('Received',fdt(t['Received On']))+kv('Parent',t['Parent Name'])+kv('Mobile',t.Mobile)+kv('Student',t['Student Name'])+kv('Class',t['Class & Section'])+
-    '<dt>Ratings</dt><dd>Overall '+rt(t.Overall)+' · T&amp;L '+rt(t['Teaching & Learning'])+' · Env '+rt(t['Environment & Safety'])+'</dd>'+
-    kv('How can we improve',t['Improvement Feedback']||'—')+kv('Suggestions',t.Suggestions||'—')+kv('Trigger',t.Trigger)+
+    '<dt>Overall Experience</dt><dd>'+rt(t.Overall)+'</dd><dt>Teaching &amp; Learning</dt><dd>'+rt(t['Teaching & Learning'])+'</dd><dt>School Environment &amp; Safety</dt><dd>'+rt(t['Environment & Safety'])+'</dd>'+
+    kv(FULLQ1,t['Improvement Feedback']||'—')+kv(FULLQ2,t.Suggestions||'—')+kv('Trigger',t.Trigger)+
     kv('Escalation email',t['Escalation Email']+(t['Escalation Email']==='Sent'?' · '+fdt(t['Escalated On']):''))+
     (t.Resolution?kv('Resolution',t.Resolution)+kv('Resolved by',(t['Resolved By']||'')+' · '+fdt(t['Resolved On'])):'')+
     (t['Parent Response']?kv('Parent response',t['Parent Response']+' ('+(t['Response Via']||'')+') · '+fdt(t['Response On'])+(t['Response Remarks']?'\n'+t['Response Remarks']:'')):'')+'</dl>';
   var id2="'"+esc(id)+"'";
+  var rr=resp(t['Source Row']);
+  if((rr.actions||[]).length)h+='<div class="box" style="background:#FFFBF2;border-color:#F1DDB0"><h5 style="color:#8A5A00">Concern area &amp; suggested action '+prio(rr.priority)+'</h5>'+actList(rr)+'</div>';
   if(t.Status===TS.ESC||t.Status===TS.REESC){
     if(isOld(t))h+='<div class="box"><h5>Old response – not yet escalated</h5><div style="font-size:13px;margin-bottom:8px">Send the escalation email to '+esc(D.config.resolvers.join(' & '))+' with the Submit Resolution button.</div><button class="btn2 pri" onclick="resend('+id2+')">Send escalation email</button></div>';
     else h+='<div class="box"><h5>Waiting for resolution</h5><div style="font-size:13px;margin-bottom:8px">Due '+fdt(t['Escalated On']+D.config.resHours*36e5)+'.</div><button class="btn2" onclick="resend('+id2+')">Resend escalation email</button></div>';
+    h+='<div class="box"><h5>Not a complaint?</h5><div style="font-size:12.5px;margin-bottom:8px">If the parent is actually happy (low star by mistake), close it without escalation.</div><button class="btn2" onclick="notComplaint('+id2+')">Mark as Not a Complaint</button></div>';
     h+='<div class="box"><h5>Enter resolution here (if received by phone / in person)</h5><select id="rby">'+D.config.resolvers.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select><textarea id="rtx" placeholder="Action taken…"></textarea><button class="btn2 pri" onclick="saveRes('+id2+')">Save resolution</button></div>';
   }
   if(t.Status===TS.RES){
@@ -397,6 +439,7 @@ function presp(id,r){
   if(!confirm(q))return;
   busy(run('apiParentResponse',KEY,id,r,$('via').value,rm),r==='Not Satisfied'?'Re-escalated':'Saved',id);
 }
+function notComplaint(id){var why=prompt('Reason (e.g. parent confirmed on call that there is no issue):','Parent is happy – no issue');if(why===null)return;busy(run('apiNotComplaint',KEY,id,why),'Marked as Not a Complaint',id)}
 function escalateRow(row){var why=prompt('Reason for escalating this response (e.g. complaint in comments):','Complaint in comments');if(why===null)return;
   busy(run('apiEscalateResponse',KEY,row,why),'Ticket created and escalation email sent')}
 start();

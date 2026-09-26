@@ -14,7 +14,8 @@ export default wrap(async (req, res) => {
     apiSaveResolution: () => core.saveResolution(base, a[0], a[1], String(a[2] || '') + ' (entered by MIS)'),
     apiMarkWhatsApp: () => core.markWhatsApp(a[0], a[1]),
     apiParentResponse: () => core.parentResponse(base, a[0], a[1], a[2], a[3]),
-    apiResendEscalation: () => core.resendEscalation(base, a[0])
+    apiResendEscalation: () => core.resendEscalation(base, a[0]),
+    apiNotComplaint: () => core.markNotComplaint(a[0], a[1])
   };
   if (!map[fn]) return json(res, 400, { error: 'Unknown action' });
   const result = await map[fn]();
