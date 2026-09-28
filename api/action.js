@@ -15,7 +15,8 @@ export default wrap(async (req, res) => {
     apiMarkWhatsApp: () => core.markWhatsApp(a[0], a[1]),
     apiParentResponse: () => core.parentResponse(base, a[0], a[1], a[2], a[3]),
     apiResendEscalation: () => core.resendEscalation(base, a[0]),
-    apiNotComplaint: () => core.markNotComplaint(a[0], a[1])
+    apiNotComplaint: () => core.markNotComplaint(a[0], a[1]),
+    apiSetRoute: () => core.setRoute(base, a[0], a[1])
   };
   if (!map[fn]) return json(res, 400, { error: 'Unknown action' });
   const result = await map[fn]();

@@ -77,6 +77,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
 .cat{display:inline-block;background:#EEF2FA;color:#2457A6;border:1px solid #D3DEF2;border-radius:10px;padding:1px 8px;font-size:11.5px;font-weight:bold;margin:1px 0}
 .act{font-size:12.5px;margin:4px 0;line-height:1.4}.act .own{color:var(--mute);font-size:11.5px}
 .pr-high{background:var(--red);color:#fff}.pr-medium{background:var(--amberbg);color:var(--amber)}.pr-low{background:var(--greybg);color:var(--grey)}
+.p-conf{background:#F3E8FF;color:#6B21A8}
 .p-nc{background:var(--greenbg);color:var(--green)}.p-dup{background:var(--greybg);color:var(--grey)}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
 .tw table.dt{border:0;min-width:1500px}
@@ -141,6 +142,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
     <span class="upd" id="upd"></span>
   </div>
   <div class="wrap">
+    <div id="warn" style="display:none;background:#FDE8E5;border:1px solid #F3B8AE;color:#7A1F14;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13.5px"></div>
     <div class="kpis" id="kpis"></div>
     <div class="row">
       <div class="panel"><h3>Escalation progress</h3><div class="funnel" id="funnel"></div></div>
@@ -164,7 +166,7 @@ table.dt{width:100%;border-collapse:collapse;background:#fff;border:1px solid va
     <div class="pane" id="p-fb">
       <div class="filters">
         <input id="q2" placeholder="Search parent, student, class, comment…" oninput="renderFeedback()">
-        <select id="fo" onchange="renderFeedback()"><option value="">All ratings</option><option value="low">Complaints (Overall ≤ 4)</option><option value="pos">Overall ≤ 4 but positive comment</option><option value="5">Overall 5</option><option value="cm5">Overall 5 with comment</option></select>
+        <select id="fo" onchange="renderFeedback()"><option value="">All ratings</option><option value="low">Complaints (Overall ≤ 4 or negative comment)</option><option value="pos">Overall ≤ 4 but positive comment</option><option value="5">Overall 5</option><option value="cm5">Overall 5 with comment</option></select>
         <select id="fc" onchange="renderFeedback()"><option value="">All concern areas</option></select>
         <label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="fd" onchange="renderFeedback()"> Show duplicate entries</label>
       </div>
@@ -241,6 +243,7 @@ function everNS(t){return /NOT Satisfied/.test(t.History||'')}
 function pill(t){
   var m={};m[TS.ESC]='p-esc';m[TS.REESC]='p-reesc';m[TS.RES]='p-res';m[TS.SAT]='p-sat';m[TS.NR]='p-nr';m[TS.NC]='p-nc';m[TS.DUP]='p-dup';
   var s='<span class="pill '+(m[t.Status]||'')+'">'+esc(t.Status)+(t.Level>1&&t.Status!==TS.SAT?' · L'+t.Level:'')+'</span>';
+  if(t.Route==='Confidential')s+=' <span class="pill p-conf" title="Mentions Principal (Indu Sharma Ma\'am) – sent to management only">Confidential</span>';
   if(isOverdue(t))s+=' <span class="pill p-over">Overdue '+Math.round(hrsSince(t['Escalated On']))+'h</span>';
   else if((t.Status===TS.ESC)&&isOld(t))s+=' <span class="pill p-old">Email not sent</span>';
   if(callNeeded(t))s+=' <span class="pill p-over">Call parent</span>';
@@ -252,7 +255,8 @@ function live(t){return t.Status!==TS.NC&&t.Status!==TS.DUP}
 function tickets(){return D.tickets.filter(function(t){return live(t)&&inRange(t['Received On'])})}
 function allTickets(){return D.tickets.filter(function(t){return inRange(t['Received On'])})}
 function responses(){return D.responses.filter(function(r){return !r.dupOf&&inRange(r.ts)})}
-function isComplaint(r){return r.overall&&r.overall<=D.config.threshold&&!r.positive}
+function isComplaint(r){return !!r.complaint}
+function lowButHappy(r){return r.overall&&r.overall<=D.config.threshold&&!r.complaint}
 function resp(row){return D.responses.filter(function(r){return r.row==row})[0]||{}}
 var FULLQ1='If you gave less than 5 stars in any area, please let us know how we can improve to meet your expectations.';
 var FULLQ2='What additional initiatives, support, or opportunities would you like BIPS to offer or incorporate to make your experience with us more enriching and fulfilling?';
@@ -265,7 +269,7 @@ function render(){
   if(!D)return;
   var R=responses(),T=tickets();
   var low=R.filter(isComplaint).length;
-  var posEx=R.filter(function(r){return r.overall&&r.overall<=D.config.threshold&&r.positive}).length;
+  var posEx=R.filter(lowButHappy).length;
   var dups=D.responses.filter(function(r){return r.dupOf&&inRange(r.ts)}).length;
   var manual=T.filter(function(t){return /^Manual/.test(t.Trigger)}).length;
   var pend=T.filter(function(t){return t.Status===TS.ESC||t.Status===TS.REESC});
@@ -277,7 +281,7 @@ function render(){
   var nr=T.filter(function(t){return t.Status===TS.NR}).length;
   var K=[
     ['Feedback received',R.length,uniqParents(R)+' parents'+(dups?' · '+dups+' duplicate'+(dups>1?'s':'')+' removed':''),'', 'fb:'],
-    ['Complaints (Overall ≤ '+D.config.threshold+')',low+manual,pct(low+manual,R.length)+' of feedback'+(posEx?' · '+posEx+' positive comments not counted':'')+(manual?' · '+manual+' manual':''),'amber','fb:low'],
+    ['Complaints',low+manual,pct(low+manual,R.length)+' of feedback'+(posEx?' · '+posEx+' positive comments not counted':'')+(manual?' · '+manual+' manual':''),'amber','fb:low'],
     ['Escalations',T.length,'tickets raised','blue','tk:'],
     ['Pending resolution',pend.length,(over?over+' overdue':'none overdue')+(old?' · '+old+' old':''),over?'red':'amber','tk:pend'],
     ['Resolved',resolved,pct(resolved,T.length)+' of escalations','blue','tk:res'],
@@ -307,6 +311,10 @@ function render(){
   $('topc').innerHTML=ck.length?ck.map(function(k){return '<div class="f clk" onclick="jumpCat(\''+esc(k).replace(/'/g,"\\'")+'\')"><span>'+esc(k)+'</span><div class="bar"><i style="width:'+(cc[k]/cmx*100)+'%;background:#C0392B"></i></div><b>'+cc[k]+'</b></div>'}).join(''):'<div class="empty">No complaints in this period</div>';
   var fc=$('fc'),cv=fc.value;fc.innerHTML='<option value="">All concern areas</option>'+ck.map(function(k){return '<option>'+esc(k)+'</option>'}).join('');fc.value=cv;
   var ss=$('fs'),cur=ss.value;ss.innerHTML='<option value="">All statuses</option><option value="pend">Pending resolution</option><option value="over">Overdue</option><option value="res">Resolved (any)</option><option value="ns">Ever not satisfied</option>'+[TS.ESC,TS.REESC,TS.RES,TS.SAT,TS.NR,TS.NC,TS.DUP].map(function(s){return '<option>'+s+'</option>'}).join('');ss.value=cur;
+  var tk={};D.tickets.forEach(function(t){if(live(t))tk[t['Source Row']]=1});
+  var stuck=D.responses.filter(function(r){return r.complaint&&!r.dupOf&&!tk[r.row]&&hrsSince(r.ts)>=1/6});
+  $('warn').style.display=stuck.length?'block':'none';
+  $('warn').innerHTML=stuck.length?'<b>'+stuck.length+' complaint'+(stuck.length>1?'s are':' is')+' not escalated yet.</b> The system normally escalates within seconds. Click <b>Refresh</b>; if this stays, check that the Google Sheet trigger (setup guide Part C) is installed. '+(D.sync&&D.sync.error?'<br>Error: '+esc(D.sync.error):''):'';
   renderActions();renderTickets();renderFeedback();
 }
 function uniqParents(R){var s={};R.forEach(function(r){s[(r.mobile||r.parent||'').replace(/\D/g,'').slice(-10)||r.parent]=1});return Object.keys(s).length}
@@ -358,7 +366,7 @@ function renderFeedback(){
     if(!inRange(r.ts))return false;
     if(r.dupOf&&!sd)return false;
     if(f==='low'&&!isComplaint(r))return false;
-    if(f==='pos'&&!(r.overall&&r.overall<=D.config.threshold&&r.positive))return false;
+    if(f==='pos'&&!lowButHappy(r))return false;
     if(f==='5'&&r.overall!==5)return false;
     if(f==='cm5'&&!(r.overall===5&&(r.improve||'').length>3))return false;
     if(fc&&(r.categories||[]).indexOf(fc)<0)return false;
@@ -366,8 +374,12 @@ function renderFeedback(){
   }).sort(function(a,b){return (b.ts||0)-(a.ts||0)});
   $('fbt').innerHTML=R.length?'<div class="tw"><table class="dt"><tr><th>Received</th><th>Parent / Student / Mobile Number</th><th>Ticket</th><th class="rt">Overall Experience</th><th class="rt">Teaching &amp; Learning</th><th class="rt">School Environment &amp; Safety</th><th class="q">'+FULLQ1+'</th><th class="q">'+FULLQ2+'</th><th class="q wide">Concern Area &amp; Suggested Action</th></tr>'+
     R.map(function(r){var t=tmap[r.row];
-      var tag=r.dupOf?'<span class="pill p-dup">Duplicate – older entry</span>':(r.overall&&r.overall<=D.config.threshold&&r.positive?'<span class="pill p-nc">Positive comment – not a complaint</span>':'');
-      var tcell=t&&t.Status!==TS.DUP&&t.Status!==TS.NC?'<a href="#" onclick="openT(\''+esc(t['Ticket ID'])+'\');return false">'+esc(t['Ticket ID'])+'</a><br>'+pill(t):(r.dupOf?'':'<button class="sbtn" onclick="escalateRow('+r.row+')">Escalate</button>');
+      var tag=r.dupOf?'<span class="pill p-dup">Duplicate – older entry</span>':(lowButHappy(r)?'<span class="pill p-nc">Positive comment – not a complaint</span>':(r.complaint&&r.overall>D.config.threshold?'<span class="pill p-esc">Negative comment</span>':''))+(r.confidential?' <span class="pill p-conf">Confidential – mentions Principal (Indu Sharma Ma\'am)</span>':'');
+      var liveT=t&&t.Status!==TS.DUP&&t.Status!==TS.NC;
+      var tcell=liveT?'<a href="#" onclick="openT(\''+esc(t['Ticket ID'])+'\');return false">'+esc(t['Ticket ID'])+'</a><br>'+pill(t)
+        :r.dupOf?''
+        :r.complaint?(hrsSince(r.ts)<1/6?'<span class="pill p-res">Escalating automatically…</span>':'<span class="pill p-over">Not escalated yet</span><br><button class="sbtn" style="margin-top:4px" onclick="escalateRow('+r.row+')">Escalate now</button>')
+        :'<button class="sbtn" title="Not a complaint by the rules – escalate manually only if needed" onclick="escalateRow('+r.row+')">Escalate manually</button>';
       return '<tr'+(r.dupOf?' class="dup"':'')+'><td>'+fdt(r.ts)+'</td><td class="pc"><b>'+esc(r.parent)+'</b><br><span style="color:#5b6477">'+esc(r.student)+' · '+esc(r.cls)+'</span><br><span style="color:#5b6477">'+esc(r.mobile)+'</span></td><td>'+tcell+'</td><td>'+rt(r.overall)+'</td><td>'+rt(r.tl)+'</td><td>'+rt(r.env)+'</td><td class="full">'+esc(r.improve||'—')+'</td><td class="full">'+esc(r.suggest||'—')+'</td><td class="full wide">'+tag+(r.dupOf?'':' '+prio(r.priority)+' '+catChips(r)+actList(r))+'</td></tr>'}).join('')+'</table></div>':'<div class="empty">No feedback matches.</div>';
 }
 function jumpCat(c){var b=document.querySelector('.tab[data-p="fb"]');tab(b);$('fo').value='low';$('fc').value=c;renderFeedback();b.scrollIntoView({behavior:'smooth'})}
@@ -409,12 +421,14 @@ function openT(id){
     (t['Parent Response']?kv('Parent response',t['Parent Response']+' ('+(t['Response Via']||'')+') · '+fdt(t['Response On'])+(t['Response Remarks']?'\n'+t['Response Remarks']:'')):'')+'</dl>';
   var id2="'"+esc(id)+"'";
   var rr=resp(t['Source Row']);
+  var conf=t.Route==='Confidential',RES=conf?(D.config.confResolvers||['Management']):D.config.resolvers;
+  if(t.Status!==TS.NC&&t.Status!==TS.DUP)h+='<div class="box" style="'+(conf?'background:#FAF5FF;border-color:#E9D5FF':'')+'"><h5 style="'+(conf?'color:#6B21A8':'')+'">Escalation routing</h5><div style="font-size:12.5px;margin-bottom:8px">'+(conf?'<b>Confidential</b> (complaint about the Principal (Indu Sharma Ma\'am)) – emails go to management only (not to the Principal or Poonam Gulati Ma\'am).':'<b>Standard</b> – emails go to '+esc(D.config.resolvers.join(' & '))+'.')+'</div><button class="btn2" onclick="setRoute('+id2+',\''+(conf?'Standard':'Confidential')+'\')">'+(conf?'Not about the Principal – send to the usual team':'Make confidential – send to management only')+'</button></div>';
   if((rr.actions||[]).length)h+='<div class="box" style="background:#FFFBF2;border-color:#F1DDB0"><h5 style="color:#8A5A00">Concern area &amp; suggested action '+prio(rr.priority)+'</h5>'+actList(rr)+'</div>';
   if(t.Status===TS.ESC||t.Status===TS.REESC){
-    if(isOld(t))h+='<div class="box"><h5>Old response – not yet escalated</h5><div style="font-size:13px;margin-bottom:8px">Send the escalation email to '+esc(D.config.resolvers.join(' & '))+' with the Submit Resolution button.</div><button class="btn2 pri" onclick="resend('+id2+')">Send escalation email</button></div>';
+    if(isOld(t))h+='<div class="box"><h5>Old response – not yet escalated</h5><div style="font-size:13px;margin-bottom:8px">Send the escalation email to '+esc(RES.join(' & '))+' with the Submit Resolution button.</div><button class="btn2 pri" onclick="resend('+id2+')">Send escalation email</button></div>';
     else h+='<div class="box"><h5>Waiting for resolution</h5><div style="font-size:13px;margin-bottom:8px">Due '+fdt(t['Escalated On']+D.config.resHours*36e5)+'.</div><button class="btn2" onclick="resend('+id2+')">Resend escalation email</button></div>';
     h+='<div class="box"><h5>Not a complaint?</h5><div style="font-size:12.5px;margin-bottom:8px">If the parent is actually happy (low star by mistake), close it without escalation.</div><button class="btn2" onclick="notComplaint('+id2+')">Mark as Not a Complaint</button></div>';
-    h+='<div class="box"><h5>Enter resolution here (if received by phone / in person)</h5><select id="rby">'+D.config.resolvers.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select><textarea id="rtx" placeholder="Action taken…"></textarea><button class="btn2 pri" onclick="saveRes('+id2+')">Save resolution</button></div>';
+    h+='<div class="box"><h5>Enter resolution here (if received by phone / in person)</h5><select id="rby">'+RES.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select><textarea id="rtx" placeholder="Action taken…"></textarea><button class="btn2 pri" onclick="saveRes('+id2+')">Save resolution</button></div>';
   }
   if(t.Status===TS.RES){
     h+='<div class="box"><h5>Step 1 · Send resolution to parent</h5><div class="msgprev">'+esc(waText(t,'resolution'))+'</div><div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'resolution\')">Send on WhatsApp</button><button class="btn2" onclick="copy(waText(find('+id2+'),\'resolution\'))">Copy message</button></div>'+
@@ -439,6 +453,7 @@ function presp(id,r){
   if(!confirm(q))return;
   busy(run('apiParentResponse',KEY,id,r,$('via').value,rm),r==='Not Satisfied'?'Re-escalated':'Saved',id);
 }
+function setRoute(id,r){if(!confirm(r==='Confidential'?'Make this ticket confidential? Future emails go to management only. If it is still open, a fresh escalation email goes to management.':'Send this ticket to the usual escalation team (Principal Indu Sharma Ma\'am & Poonam Gulati Ma\'am)? If it is still open, the escalation email will be sent to them.'))return;busy(run('apiSetRoute',KEY,id,r),'Routing changed',id)}
 function notComplaint(id){var why=prompt('Reason (e.g. parent confirmed on call that there is no issue):','Parent is happy – no issue');if(why===null)return;busy(run('apiNotComplaint',KEY,id,why),'Marked as Not a Complaint',id)}
 function escalateRow(row){var why=prompt('Reason for escalating this response (e.g. complaint in comments):','Complaint in comments');if(why===null)return;
   busy(run('apiEscalateResponse',KEY,row,why),'Ticket created and escalation email sent')}
