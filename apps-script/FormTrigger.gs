@@ -1,12 +1,13 @@
 /**
- * BIPS Feedback – real-time link between the Google Sheet and the Vercel app.
- * Paste into: Google Sheet → Extensions → Apps Script. Fill the 2 values, run installTriggers() once.
+ * Feedback (BIPS / Bodyzone / Spa Kora) – real-time link between the Google Sheet and the Vercel app.
+ * Paste into: Google Sheet → Extensions → Apps Script. Fill the 3 values, run installTriggers() once.
  *
  *  - Every new form response  -> calls the Vercel app instantly (ticket + escalation email within seconds)
  *  - Every hour               -> safety sync + overdue reminder emails
  */
 const APP_URL = 'https://YOUR-PROJECT.vercel.app';   // your Vercel URL, no slash at the end
 const SYNC_SECRET = 'PASTE-THE-SAME-SYNC_SECRET-AS-IN-VERCEL';
+const COMPANY = 'bips';     // 'bips'  OR  'bodyzone'  OR  'spakora'  – which company this sheet belongs to
 
 function onFeedbackSubmit(e) {
   Utilities.sleep(2000);                               // let Google finish writing the row
@@ -18,7 +19,7 @@ function hourlySync() {
 }
 
 function callApp_(extra) {
-  const url = APP_URL + '/api/sync?secret=' + encodeURIComponent(SYNC_SECRET) + extra;
+  const url = APP_URL + '/api/sync?secret=' + encodeURIComponent(SYNC_SECRET) + '&c=' + COMPANY + extra;
   const r = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   Logger.log(r.getResponseCode() + ' ' + r.getContentText());
 }

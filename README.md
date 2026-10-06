@@ -1,6 +1,18 @@
-# BIPS – Parent Feedback & Escalation System (Vercel)
+# GCS Feedback & Escalation System – BIPS · Bodyzone · Spa Kora (Vercel)
 
-Live dashboard + automatic escalation emails on top of the Google Form response sheet.
+Live dashboard + automatic escalation emails on top of the Google Form response sheets.
+One Vercel project serves three companies. The dashboard first asks **which company**, then that company's **password**.
+
+| Company | Sheet | Escalates to | Password variable |
+|---|---|---|---|
+| BIPS | `SHEET_ID` | Indu Sharma Ma'am, Poonam Gulati Ma'am (`ESCALATE_TO`) | `DASHBOARD_PASSWORD` |
+| Bodyzone | built in (`1VDZkztZ…`) | Amit Kumar, Amit Kapoor, Floor Managers (`BODYZONE_ESCALATE_TO`) | `BODYZONE_PASSWORD` |
+| Spa Kora | built in (`1i15JFAu…`) | Amit Kumar, Deepmala (`SPAKORA_ESCALATE_TO`) | `SPAKORA_PASSWORD` |
+
+Each sheet gets its own `FB Tickets` and `FB Settings` tabs. Ticket numbers: `BIPS-FB-…`, `BZ-FB-…`, `SK-FB-…`.
+The Principal rule (complaints about Indu Sharma Ma'am go only to `CONFIDENTIAL_ESCALATE_TO`) applies to BIPS only.
+Bodyzone / Spa Kora variables can also be named `BODYZONE_CC`, `BODYZONE_ESCALATE_TO_NAMES`, `BODYZONE_RESOLVER_NAMES` (same for `SPAKORA_`).
+In `apps-script/FormTrigger.gs` set `COMPANY = 'bips' | 'bodyzone' | 'spakora'` for each sheet.
 
 ## How it works
 ```
@@ -8,7 +20,7 @@ Google Form ──► Google Sheet "Form responses 1"
                     │  (Apps Script trigger – instant)
                     ▼
             Vercel  /api/sync  ──► ticket in "FB Tickets" tab
-                                  ──► escalation email (Indu Ma'am, Poonam Gulati Ma'am, CC Principal)
+                                  ──► escalation email (Principal Indu Sharma Ma'am, Poonam Gulati Ma'am)
 Email button ──► /resolve.html ──► resolution saved ──► alert email to MIS
 Dashboard (/) ──► Send on WhatsApp (message contains parent link)
 Parent link ──► /confirm.html ──► Satisfied (closure email) / Not Satisfied + remarks (re-escalation email)
@@ -20,7 +32,7 @@ The Google Sheet is the database. The dashboard reads it live (auto-refresh ever
 | Path | What |
 |---|---|
 | `public/index.html` | Dashboard |
-| `public/resolve.html` | Resolution form opened from the email (Indu Ma'am / Poonam Ma'am) |
+| `public/resolve.html` | Resolution form opened from the email (Indu Sharma Ma'am / Poonam Gulati Ma'am) |
 | `public/confirm.html` | Parent's Satisfied / Not Satisfied form (link in the WhatsApp message) |
 | `api/*.js` | Serverless API (data, action, resolve, sync, cron, health) |
 | `lib/*.js` | Logic, Google Sheets access, email templates |
@@ -36,8 +48,9 @@ The Google Sheet is the database. The dashboard reads it live (auto-refresh ever
 | `GMAIL_USER` | `mis.gcs1@gmail.com` |
 | `GMAIL_APP_PASSWORD` | 16-letter Gmail App Password |
 | `ESCALATE_TO` | `indu@...,poonam@...` |
-| `CC` | `principal@...` |
+| `CC` | optional (Principal Indu Sharma Ma'am is already in ESCALATE_TO) |
 | `MIS_EMAIL` | `mis.gcs1@gmail.com` |
+| `CONFIDENTIAL_ESCALATE_TO` | who gets complaints that mention the Principal (Indu Sharma Ma'am) (default: MIS_EMAIL). These are never sent to the Principal or Poonam Gulati Ma'am. |
 | `DASHBOARD_PASSWORD` | your dashboard password |
 | `SYNC_SECRET` | any long random text (same value goes in FormTrigger.gs) |
 | `CRON_SECRET` | any long random text |
@@ -46,6 +59,6 @@ Optional – automatic WhatsApp (Meta Cloud API): `WA_TOKEN`, `WA_PHONE_NUMBER_I
 
 Optional: `RESPONSE_SHEET` (default `Form responses 1`), `ESCALATE_IF_OVERALL_AT_OR_BELOW` (4), `RESOLUTION_HOURS` (24), `PARENT_REPLY_HOURS` (24), `APP_URL`.
 
-Check setup any time: `https://YOUR-APP.vercel.app/api/health?key=DASHBOARD_PASSWORD`
+Check setup any time: `https://YOUR-APP.vercel.app/api/health?c=bips&key=PASSWORD` (use `c=bodyzone` / `c=spakora` with that company's password)
 
 See **BIPS_Feedback_Vercel_Setup_Guide.pdf** for step-by-step instructions.
