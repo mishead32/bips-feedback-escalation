@@ -33,10 +33,11 @@
 </head>
 <body>
 <div class="wrap"><div class="card">
-  <div class="hd"><small id="logo">&nbsp;</small><h1>Are you satisfied with the action taken?</h1></div>
+  <div class="hd"><div id="lb" style="display:none;background:#fff;border-radius:12px;padding:8px 14px;margin:0 auto 10px;width:max-content"><img id="li" style="height:54px;display:block" alt=""></div><small id="logo">&nbsp;</small><h1>Are you satisfied with the action taken?</h1></div>
   <div class="bd" id="bd">Loading…</div>
 </div></div>
 <script>
+(function(){var c=new URLSearchParams(location.search).get('c')||'bips',i=document.getElementById('li'),b=document.getElementById('lb');if(c==='bodyzone')b.style.background='#0A0A0A';if(c==='spakora')b.style.background='#FFF5F8';i.onload=function(){b.style.display='block'};i.src='/logos/'+c+'.png'})();
 var P=new URLSearchParams(location.search),T=P.get('t'),PK=P.get('p'),CO=P.get('c')||'bips',choice='',ORG='';
 var bd=document.getElementById('bd');
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}

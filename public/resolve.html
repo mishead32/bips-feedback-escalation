@@ -9,7 +9,7 @@
   body{margin:0;background:#EEF2F8;font-family:Arial,Helvetica,sans-serif;color:#1d2433}
   .wrap{max-width:720px;margin:0 auto;padding:18px}
   .card{background:#fff;border:1px solid #D9E1EC;border-radius:10px;overflow:hidden}
-  .hd{background:var(--brand,#1F3864);color:#fff;padding:16px 20px}
+  .hd{background:var(--brand,#1F3864);color:#fff;padding:16px 20px;text-align:center}
   .hd small{display:block;opacity:.8;font-size:12px;letter-spacing:.06em}
   .hd h1{margin:4px 0 0;font-size:20px}
   .bd{padding:18px 20px}
@@ -29,10 +29,11 @@
 </head>
 <body>
 <div class="wrap"><div class="card">
-  <div class="hd"><small id="school">&nbsp;</small><h1 id="title">Submit Resolution</h1></div>
+  <div class="hd"><div id="lb" style="display:none;background:#fff;border-radius:12px;padding:8px 14px;margin:0 auto 10px;width:max-content"><img id="li" style="height:54px;display:block" alt=""></div><small id="school">&nbsp;</small><h1 id="title">Submit Resolution</h1></div>
   <div class="bd" id="bd">Loading…</div>
 </div></div>
 <script>
+(function(){var c=new URLSearchParams(location.search).get('c')||'bips',i=document.getElementById('li'),b=document.getElementById('lb');if(c==='bodyzone')b.style.background='#0A0A0A';if(c==='spakora')b.style.background='#FFF5F8';i.onload=function(){b.style.display='block'};i.src='/logos/'+c+'.png'})();
 var P=new URLSearchParams(location.search),T=P.get('t'),K=P.get('k'),CO=P.get('c')||'bips';
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function row(k,v){return '<tr><td>'+esc(k)+'</td><td>'+v+'</td></tr>'}
