@@ -374,8 +374,8 @@ function inRange(ms){
 function hrsSince(ms){return ms?(Date.now()-ms)/36e5:0}
 function isOld(t){return t['Escalation Email']!=='Sent'}
 function isOverdue(t){return (t.Status===TS.ESC||t.Status===TS.REESC)&&!isOld(t)&&hrsSince(t['Escalated On'])>D.config.resHours}
-function waPending(t){return t.Status===TS.RES&&!t['Resolution WA Sent On']}
-function callNeeded(t){return t.Status===TS.RES&&t['Resolution WA Sent On']&&hrsSince(t['Resolution WA Sent On'])>D.config.replyHours}
+function waPending(t){return false}
+function callNeeded(t){return t.Status===TS.RES&&hrsSince(t['Resolved On'])>D.config.replyHours}
 function everNS(t){return /NOT Satisfied/.test(t.History||'')}
 function SL(x){return String(x||'').replace('Awaiting Parent','Awaiting '+WT())}
 function pill(t){
@@ -472,9 +472,8 @@ function renderActions(){
   var G=[
     ['Resolution overdue (more than '+D.config.resHours+' hrs)','Reminder emails go automatically every day. Follow up with the escalation owners.',T.filter(isOverdue),'red'],
     ['Re-escalated – '+W()+' not satisfied','Waiting for a revised resolution.',T.filter(function(t){return t.Status===TS.REESC&&!isOverdue(t)}),'red'],
-    ['Send resolution to '+W()+' on WhatsApp','Resolution received. Open the ticket → Send on WhatsApp.',T.filter(waPending),'amber'],
-    ['Call '+W()+' – no reply after '+D.config.replyHours+' hrs','WhatsApp sent but no Satisfied / Not Satisfied yet. Call and record the answer.',T.filter(callNeeded),'red'],
-    ['Awaiting '+W()+' reply','WhatsApp sent; record Satisfied / Not Satisfied when the '+W()+' replies.',T.filter(function(t){return t.Status===TS.RES&&t['Resolution WA Sent On']&&!callNeeded(t)}),'amber'],
+    ['Call '+W()+' – pending over '+D.config.replyHours+' hrs','Resolution given but '+W()+'\'s answer not recorded yet. Call and record Satisfied / Not Satisfied.',T.filter(callNeeded),'red'],
+    ['Call '+W()+' for feedback','Resolution received. Call the '+W()+' and record Satisfied / Not Satisfied.',T.filter(function(t){return t.Status===TS.RES&&!callNeeded(t)}),'amber'],
     ['Waiting for resolution (within '+D.config.resHours+' hrs)','Escalation email sent.',T.filter(function(t){return t.Status===TS.ESC&&!isOld(t)&&!isOverdue(t)}),''],
     ['Old responses – escalation email not sent','Imported from before the system started. Open a ticket to send the escalation email, or enter the resolution directly.',T.filter(function(t){return t.Status===TS.ESC&&isOld(t)}),'grey']
   ];
@@ -574,9 +573,7 @@ function openT(id){
     h+='<div class="box"><h5>Enter resolution here (if received by phone / in person)</h5><select id="rby">'+RES.map(function(r){return '<option>'+esc(r)+'</option>'}).join('')+'</select><textarea id="rtx" placeholder="Action taken…"></textarea><button class="btn2 pri" onclick="saveRes('+id2+')">Save resolution</button></div>';
   }
   if(t.Status===TS.RES){
-    h+='<div class="box"><h5>Step 1 · Send resolution to '+W()+'</h5><div class="msgprev">'+esc(waText(t,'resolution'))+'</div><div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'resolution\')">Send on WhatsApp</button><button class="btn2" onclick="copy(waText(find('+id2+'),\'resolution\'))">Copy message</button></div>'+
-      (t['Resolution WA Sent On']?'<div style="font-size:12px;color:#2E7D4F;margin-top:6px">✓ Sent '+fdt(t['Resolution WA Sent On'])+(/WhatsApp auto-sent: resolution/.test(t.History||'')?' automatically (WhatsApp API)':'')+'</div>':(D.config.waAuto&&/auto-send FAILED \(resolution/.test(t.History||'')?'<div style="font-size:12px;color:#C0392B;margin-top:6px">Automatic WhatsApp failed – see History. Please send manually.</div>':''))+'</div>';
-    h+='<div class="box"><h5>Step 2 · '+WT()+'\'s answer</h5><div style="font-size:12.5px;color:#374151;margin-bottom:8px">The '+W()+' answers through the link in the WhatsApp message – the ticket updates automatically. Use the buttons below only if the '+W()+' answered by call or in person.</div><select id="via"><option>Phone call</option><option>WhatsApp reply</option><option>In person</option></select><textarea id="rmk" placeholder="'+WT()+'\'s words / reason (required if Not Satisfied)"></textarea><div class="acts"><button class="btn2 ok" onclick="presp('+id2+',\'Satisfied\')">Satisfied</button><button class="btn2 no" onclick="presp('+id2+',\'Not Satisfied\')">Not Satisfied</button><button class="btn2" onclick="presp('+id2+',\'No Response\')">Close – no response</button></div></div>';
+    h+='<div class="box"><h5>'+WT()+'\'s answer</h5><div style="font-size:12.5px;color:#374151;margin-bottom:8px"><b>Resolution given:</b> '+esc(t.Resolution||'')+'<br>Call the '+W()+', confirm the action taken and record whether they are Satisfied or Not Satisfied.</div><select id="via"><option>Phone call</option><option>WhatsApp reply</option><option>In person</option></select><textarea id="rmk" placeholder="'+WT()+'\'s words / reason (required if Not Satisfied)"></textarea><div class="acts"><button class="btn2 ok" onclick="presp('+id2+',\'Satisfied\')">Satisfied</button><button class="btn2 no" onclick="presp('+id2+',\'Not Satisfied\')">Not Satisfied</button><button class="btn2" onclick="presp('+id2+',\'No Response\')">Close – no response</button></div></div>';
   }
   var autoC=/WhatsApp auto-sent: closed/.test(t.History||''),autoN=(String(t.History||'').split('WhatsApp auto-sent: notsat').length-1)>=(Number(t.Level||1)-1)&&t.Level>1;
   if(t.Status===TS.SAT)h+='<div class="box"><h5>Thank the '+W()+'</h5>'+(autoC?'<div style="font-size:12.5px;color:#2E7D4F;margin-bottom:8px">✓ Closure message sent automatically on WhatsApp</div>':'')+'<div class="acts"><button class="btn2 wa" onclick="sendWA('+id2+',\'closed\')">'+(autoC?'Send again manually':'Send closure message on WhatsApp')+'</button></div></div>';

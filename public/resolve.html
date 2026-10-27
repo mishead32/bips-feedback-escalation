@@ -65,7 +65,7 @@ fetch('/api/resolve?c='+encodeURIComponent(CO)+'&t='+encodeURIComponent(T||'')+'
     fetch('/api/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({c:CO,t:T,k:K,text:txt,by:document.getElementById('by').value})})
       .then(function(r){return r.json()}).then(function(j){
         if(j.error)throw new Error(j.error);
-        f.style.display='none';m.className='msg ok';m.textContent='Thank you. The resolution has been saved and the MIS team will share it with the '+((window.__who)||'parent')+'.';
+        f.style.display='none';m.className='msg ok';m.textContent='Thank you. The resolution has been saved. The MIS team will call the '+((window.__who)||'parent')+' to confirm.';
       }).catch(function(err){b.disabled=false;b.textContent='Submit Resolution';m.className='msg err';m.textContent=err.message});
   };
 }).catch(function(){bd.innerHTML='<div class="msg err">Could not load. Please check your internet and refresh.</div>'});
