@@ -453,7 +453,9 @@ function render(){
   var fc=$('fc'),cv=fc.value;fc.innerHTML='<option value="">All concern areas</option>'+ck.map(function(k){return '<option>'+esc(k)+'</option>'}).join('');fc.value=cv;
   var ss=$('fs'),cur=ss.value;ss.innerHTML='<option value="">All statuses</option><option value="pend">Pending resolution</option><option value="over">Overdue</option><option value="res">Resolved (any)</option><option value="ns">Ever not satisfied</option>'+[TS.ESC,TS.REESC,TS.RES,TS.SAT,TS.NR,TS.NC,TS.DUP].map(function(s){return '<option value="'+s+'">'+SL(s)+'</option>'}).join('');ss.value=cur;
   var tk={};D.tickets.forEach(function(t){if(live(t))tk[t['Source Row']]=1});
-  var stuck=D.responses.filter(function(r){return r.complaint&&!r.dupOf&&!tk[r.row]&&hrsSince(r.ts)>=1/6});
+  var anyT={};D.tickets.forEach(function(t){anyT[t['Source Row']]=t});
+  var olderLive={};D.responses.forEach(function(x){if(x.dupOf&&tk[x.row])olderLive[x.dupOf]=1});
+  var stuck=D.responses.filter(function(r){var t=anyT[r.row];return r.complaint&&!r.dupOf&&!tk[r.row]&&!olderLive[r.row]&&!(t&&/by MIS/.test(t.History||''))&&hrsSince(r.ts)>=1/6});
   $('warn').style.display=stuck.length?'block':'none';
   $('warn').innerHTML=stuck.length?'<b>'+stuck.length+' complaint'+(stuck.length>1?'s are':' is')+' not escalated yet.</b> The system normally escalates within seconds. Click <b>Refresh</b>; if this stays, check that the Google Sheet trigger (setup guide Part C) is installed. '+(D.sync&&D.sync.error?'<br>Error: '+esc(D.sync.error):''):'';
   renderActions();renderTickets();renderFeedback();
