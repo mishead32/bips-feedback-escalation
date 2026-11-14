@@ -377,12 +377,13 @@ function isOverdue(t){return (t.Status===TS.ESC||t.Status===TS.REESC)&&!isOld(t)
 function waPending(t){return false}
 function callNeeded(t){return t.Status===TS.RES&&hrsSince(t['Resolved On'])>D.config.replyHours}
 function everNS(t){return /NOT Satisfied/.test(t.History||'')}
+function ageTxt(h){if(h<24)return Math.max(1,Math.round(h))+' hrs';var d=Math.floor(h/24);return d+(d===1?' day':' days')}
 function SL(x){return String(x||'').replace('Awaiting Parent','Awaiting '+WT())}
 function pill(t){
   var m={};m[TS.ESC]='p-esc';m[TS.REESC]='p-reesc';m[TS.RES]='p-res';m[TS.SAT]='p-sat';m[TS.NR]='p-nr';m[TS.NC]='p-nc';m[TS.DUP]='p-dup';
   var s='<span class="pill '+(m[t.Status]||'')+'">'+esc(SL(t.Status))+(t.Level>1&&t.Status!==TS.SAT?' · L'+t.Level:'')+'</span>';
   if(t.Route==='Confidential')s+=' <span class="pill p-conf" title="Confidential – sent to management only">Confidential</span>';
-  if(isOverdue(t))s+=' <span class="pill p-over">Overdue '+Math.round(hrsSince(t['Escalated On']))+'h</span>';
+  if(isOverdue(t))s+=' <span class="pill p-over">Overdue '+ageTxt(hrsSince(t['Escalated On']))+'</span>';
   else if((t.Status===TS.ESC)&&isOld(t))s+=' <span class="pill p-old">Email not sent</span>';
   if(callNeeded(t))s+=' <span class="pill p-over">Call '+W()+'</span>';
   return s;
